@@ -357,6 +357,9 @@ module FatesInterfaceMod
       ! 3 = patch has been called for photosynthesis at least once
       integer, allocatable  :: filter_photo_pa(:)
 
+      ! 10-day running mean of the 2m temperature (K)
+      real(r8), allocatable :: t_a10_pa(:)
+
       ! atmospheric pressure (Pa)
       real(r8)              :: forc_pbot             
 
@@ -755,6 +758,7 @@ contains
 
       ! Photosynthesis
       allocate(bc_in%filter_photo_pa(maxPatchesPerSite))
+      allocate(bc_in%t_a10_pa(maxPatchesPerSite))
       allocate(bc_in%dayl_factor_pa(maxPatchesPerSite))
       allocate(bc_in%esat_tv_pa(maxPatchesPerSite))
       allocate(bc_in%eair_pa(maxPatchesPerSite))
@@ -885,7 +889,7 @@ contains
       this%bc_in(s)%precip24_pa(:) = 0.0_r8
       this%bc_in(s)%relhumid24_pa(:) = 0.0_r8
       this%bc_in(s)%wind24_pa(:)     = 0.0_r8
-
+      this%bc_in(s)%t_a10_pa(:)     = 0.0_r8 !Does this temp input need to be 0?
       this%bc_in(s)%solad_parb(:,:)     = 0.0_r8
       this%bc_in(s)%solai_parb(:,:)     = 0.0_r8
       this%bc_in(s)%smp_sl(:)           = 0.0_r8
