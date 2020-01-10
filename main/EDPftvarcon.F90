@@ -108,9 +108,6 @@ module EDPftvarcon
      real(r8), allocatable :: vcmaxse(:)
      real(r8), allocatable :: jmaxse(:)
      real(r8), allocatable :: tpuse(:)
-     real(r8), allocatable :: jmax_np1(:)
-     real(r8), allocatable :: jmax_np2(:)
-     real(r8), allocatable :: jmax_np3(:)
      real(r8), allocatable :: vcmax_np1(:)
      real(r8), allocatable :: vcmax_np2(:)
      real(r8), allocatable :: vcmax_np3(:)
@@ -729,31 +726,19 @@ contains
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
-    name = 'fates_prt_jmax_np1'
+    name = 'fates_eca_vcmax_np1'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
-    name = 'fates_prt_jmax_np2'
+    name = 'fates_eca_vcmax_np2'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
-    name = 'fates_prt_jmax_np3'
+    name = 'fates_eca_vcmax_np3'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
-    name = 'fates_prt_vcmax_np1'
-    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
-         dimension_names=dim_names, lower_bounds=dim_lower_bound)
-
-    name = 'fates_prt_vcmax_np2'
-    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
-         dimension_names=dim_names, lower_bounds=dim_lower_bound)
-
-    name = 'fates_prt_vcmax_np3'
-    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
-         dimension_names=dim_names, lower_bounds=dim_lower_bound)
-
-    name = 'fates_prt_vcmax_np4'
+    name = 'fates_eca_vcmax_np4'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
@@ -1192,31 +1177,19 @@ contains
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%tpuse)
 
-    name = 'fates_ptr_jmax_np1'
-    call fates_params%RetreiveParameterAllocate(name=name, &
-         data=this%jmax_np1)
-
-    name = 'fates_ptr_jmax_np2'
-    call fates_params%RetreiveParameterAllocate(name=name, &
-         data=this%jmax_np2)
-
-    name = 'fates_ptr_jmax_np3'
-    call fates_params%RetreiveParameterAllocate(name=name, &
-         data=this%jmax_np3)
-
-    name = 'fates_ptr_vcmax_np1'
+    name = 'fates_eca_vcmax_np1'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%vcmax_np1)
 
-    name = 'fates_ptr_vcmax_np2'
+    name = 'fates_eca_vcmax_np2'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%vcmax_np2)
 
-    name = 'fates_ptr_vcmax_np3'
+    name = 'fates_eca_vcmax_np3'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%vcmax_np3)
 
-    name = 'fates_ptr_vcmax_np4'
+    name = 'fates_eca_vcmax_np4'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%vcmax_np4)
 
@@ -1839,9 +1812,6 @@ contains
         write(fates_log(),fmt0) 'vcmaxse = ',EDPftvarcon_inst%vcmaxse
         write(fates_log(),fmt0) 'jmaxse = ',EDPftvarcon_inst%jmaxse
         write(fates_log(),fmt0) 'tpuse = ',EDPftvarcon_inst%tpuse
-        write(fates_log(),fmt0) 'jmax_np1 = ',EDPftvarcon_inst%jmax_np1
-        write(fates_log(),fmt0) 'jmax_np2 = ',EDPftvarcon_inst%jmax_np2
-        write(fates_log(),fmt0) 'jmax_np3 = ',EDPftvarcon_inst%jmax_np3
         write(fates_log(),fmt0) 'vcmax_np1 = ',EDPftvarcon_inst%vcmax_np1
         write(fates_log(),fmt0) 'vcmax_np2 = ',EDPftvarcon_inst%vcmax_np2
         write(fates_log(),fmt0) 'vcmax_np3 = ',EDPftvarcon_inst%vcmax_np3
