@@ -744,7 +744,7 @@ contains
      
          ! Estimate absorbing root total length (all layers)
          ! ------------------------------------------------------------------------------
-         ccohort_hydr%l_aroot_tot        = fnrt_c*C2B*EDPftvarcon_inst%hydr_srl(ft)
+         ccohort_hydr%l_aroot_tot        = fnrt_c*C2B*EDPftvarcon_inst%hydr_srl(ft)*g_per_kg
 
          ! Estimate absorbing root volume (all layers)
          ! ------------------------------------------------------------------------------
