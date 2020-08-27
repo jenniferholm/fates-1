@@ -162,8 +162,20 @@ variables:
 		fates_eca_vmax_p:units = "gP/gC/s" ;
 		fates_eca_vmax_p:long_name = "maximum production rate for plant p uptake (ECA)" ;
 	double fates_eca_vmax_ptase(fates_pft) ;
-		fates_eca_vmax_ptase:units = "gP/m2/s" ;
-		fates_eca_vmax_ptase:long_name = "maximum production rate for biochemical P (per m2) (ECA)" ;
+                fates_eca_vmax_ptase:units = "gP/m2/s" ;
+                fates_eca_vmax_ptase:long_name = "maximum production rate for biochemical P (per m2) (ECA)" ;
+        double fates_eca_vcmax_np1(fates_pft) ;
+                fates_eca_vcmax_np1:long_name = "vcmax~np relationship coefficient" ;
+                fates_eca_vcmax_np1:unit = "" ;
+        double fates_eca_vcmax_np2(fates_pft) ;
+                fates_eca_vcmax_np2:long_name = "vcmax~np relationship coefficient" ;
+                fates_eca_vcmax_np2:unit = "" ;
+        double fates_eca_vcmax_np3(fates_pft) ;
+                fates_eca_vcmax_np3:long_name = "vcmax~np relationship coefficient" ;
+                fates_eca_vcmax_np3:unit = "" ;
+        double fates_eca_vcmax_np4(pft) ;
+                fates_eca_vcmax_np4:long_name = "vcmax~np relationship coefficient" ;
+                fates_eca_vcmax_np4:unit = "" ;
 	double fates_fire_alpha_SH(fates_pft) ;
 		fates_fire_alpha_SH:units = "NA" ;
 		fates_fire_alpha_SH:long_name = "spitfire parameter, alpha scorch height, Equation 16 Thonicke et al 2010" ;
@@ -398,7 +410,7 @@ variables:
 	double fates_prescribed_recruitment(fates_pft) ;
 		fates_prescribed_recruitment:units = "n/yr" ;
 		fates_prescribed_recruitment:long_name = "recruitment rate for prescribed physiology mode" ;
-	double fates_prt_alloc_priority(fates_prt_organs, fates_pft) ;
+        double fates_prt_alloc_priority(fates_prt_organs, fates_pft) ;
 		fates_prt_alloc_priority:units = "index (0-fates_prt_organs)" ;
 		fates_prt_alloc_priority:long_name = "Priority order for allocation" ;
 	double fates_prt_nitr_stoich_p1(fates_prt_organs, fates_pft) ;
@@ -675,7 +687,7 @@ variables:
 	double fates_phen_ncolddayslim ;
 		fates_phen_ncolddayslim:units = "days" ;
 		fates_phen_ncolddayslim:long_name = "day threshold exceedance for temperature leaf-drop" ;
-	double fates_q10_froz ;
+        double fates_q10_froz ;
 		fates_q10_froz:units = "unitless" ;
 		fates_q10_froz:long_name = "Q10 for frozen-soil respiration rates" ;
 	double fates_q10_mr ;
@@ -822,6 +834,18 @@ data:
  fates_eca_vmax_p = _, _, _, _, _, _, _, _, _, _, _, _ ;
 
  fates_eca_vmax_ptase = _, _, _, _, _, _, _, _, _, _, _, _ ;
+
+ fates_eca_vcmax_np1 = 4.02421875, 3.2345, 4.800, 3.878125, 4.800, 4.7175,
+    3.9421875, 3.700, 3.7859375, 3.86757, 3.7859375, 4.43859375 ;
+
+ fates_eca_vcmax_np2 = 0.7640625, 0.7828125, 0.7453125, 0.9140625, 0.8015625,
+    0.91875, 1.096875, 0.6, 1.134375, 0.742968, 1.134375, 0.6703125 ;
+
+ fates_eca_vcmax_np3 = 0.07125, 008375, 0.08625, 0.19125, 0.12125, 0.185,
+    0.1225, 0.04, 0.1725, 0.126875, 0.1725, 0.14625 ;
+
+ fates_eca_vcmax_np4 = 0.282, 0.282, 0.282, 0.282, 0.282, 0.282, 0.282, 0.282,
+    0.282, 0.282, 0.282, 0.282 ;
 
  fates_fire_alpha_SH = 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 
     0.2 ;

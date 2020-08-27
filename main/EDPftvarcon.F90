@@ -87,7 +87,7 @@ module EDPftvarcon
                                                      ! decreases light interception
      real(r8), allocatable :: c3psn(:)               ! index defining the photosynthetic 
                                                      ! pathway C4 = 0,  C3 = 1
-    
+     real(r8), allocatable :: flnr(:)                ! fraction of leaf N in Rubisco 
      real(r8), allocatable :: smpso(:)               ! Soil water potential at full stomatal opening 
                                                      ! (non-HYDRO mode only) [mm]
      real(r8), allocatable :: smpsc(:)               ! Soil water potential at full stomatal closure 
@@ -117,9 +117,12 @@ module EDPftvarcon
      real(r8), allocatable :: vcmaxse(:)
      real(r8), allocatable :: jmaxse(:)
      real(r8), allocatable :: tpuse(:)
-     real(r8), allocatable :: germination_rate(:)        ! Fraction of seed mass germinating per year (yr-1)
-     real(r8), allocatable :: seed_decay_rate(:)         ! Fraction of seed mass (both germinated and 
-                                                         ! ungerminated), decaying per year    (yr-1)
+     real(r8), allocatable :: vcmax_np1(:)
+     real(r8), allocatable :: vcmax_np2(:)
+     real(r8), allocatable :: vcmax_np3(:)
+     real(r8), allocatable :: vcmax_np4(:)
+     real(r8), allocatable :: germination_timescale(:)
+     real(r8), allocatable :: seed_decay_turnover(:)
      
      real(r8), allocatable :: trim_limit(:)              ! Limit to reductions in leaf area w stress (m2/m2)
      real(r8), allocatable :: trim_inc(:)                ! Incremental change in trimming function   (m2/m2)
@@ -210,55 +213,17 @@ module EDPftvarcon
      real(r8), allocatable :: prt_phos_stoich_p2(:,:)   ! Parameter 2 for phosphorus stoichiometry (pft x organ) 
      real(r8), allocatable :: prt_alloc_priority(:,:)   ! Allocation priority for each organ (pft x organ) [integer 0-6]
 
-     ! Nutrient Aquisition parameters
-
-     real(r8), allocatable :: prescribed_nuptake(:)     ! Nitrogen uptake flux per unit crown area 
-                                                        ! (negative implies fraction of NPP) kgN/m2/yr
-
-     real(r8), allocatable :: prescribed_puptake(:)     ! Phosphorus uptake flux per unit crown area 
-                                                        ! (negative implies fraction of NPP) kgP/m2/yr
-
-     ! (NONE OF THESE ARE ACTIVE YET - PLACEHOLDERS ONLY!!!!!)
-
-     ! Nutrient Aquisition (ECA & RD)
-!     real(r8), allocatable :: decompmicc(:)             ! microbial decomposer biomass gC/m3
-                                                        ! on root surface
-
-     ! ECA Parameters: See Zhu et al. Multiple soil nutrient competition between plants,
-     !                     microbes, and mineral surfaces: model development, parameterization,
-     !                     and example applications in several tropical forests.  Biogeosciences,
-     !                     13, pp.341-363, 2016.
-     ! KM: Michaeles-Menten half-saturation constants for ECA (plant–enzyme affinity)
-     ! VMAX: Product of the reaction-rate and enzyme abundance for each PFT in ECA
-     ! Note*: units of [gC] is grams carbon of fine-root
-
-     real(r8), allocatable :: eca_km_nh4(:)       ! half-saturation constant for plant nh4 uptake  [gN/m3]
-     real(r8), allocatable :: eca_vmax_nh4(:)     ! maximum production rate for plant nh4 uptake   [gN/gC/s] 
-     real(r8), allocatable :: eca_km_no3(:)       ! half-saturation constant for plant no3 uptake  [gN/m3]
-     real(r8), allocatable :: eca_vmax_no3(:)     ! maximum production rate for plant no3 uptake   [gN/gC/s]
-     real(r8), allocatable :: eca_km_p(:)         ! half-saturation constant for plant p uptake    [gP/m3]
-     real(r8), allocatable :: eca_vmax_p(:)       ! maximum production rate for plant p uptake     [gP/gC/s]
-     real(r8), allocatable :: eca_km_ptase(:)     ! half-saturation constant for biochemical P production [gP/m3]
-     real(r8), allocatable :: eca_vmax_ptase(:)   ! maximum production rate for biochemical P prod        [gP/m2/s]
-     real(r8), allocatable :: eca_alpha_ptase(:)  ! Fraction of min P generated from ptase activity
-                                                  ! that is immediately sent to the plant [/]
-     real(r8), allocatable :: eca_lambda_ptase(:) ! critical value for Ptase that incurs 
-                                                  ! biochemical production, fraction based how much
-                                                  ! more in need a plant is for P versus N [/]
-
-     
-     real(r8), allocatable :: nfix1(:)   ! nitrogen fixation parameter 1 (in file, but not used yet)
-     real(r8), allocatable :: nfix2(:)   ! nitrogen fixation parameter 2 (in file, but not used yet)
-
-
      ! Turnover related things
 
      real(r8), allocatable :: phenflush_fraction(:)       ! Maximum fraction of storage carbon used to flush leaves
                                                           ! on bud-burst [kgC/kgC]
+<<<<<<< HEAD
      real(r8), allocatable :: phen_cold_size_threshold(:) ! stem/leaf drop occurs on DBH size of decidious non-woody 
                                                           ! (coastal grass) plants larger than the threshold value 							  
      real(r8), allocatable :: phen_stem_drop_fraction(:)  ! Fraction of stem dropped/senescened for decidious 
                                                           ! non-woody (grass) plants		
+=======
+>>>>>>> jaholm-cnp-photosynthesis-limits
 
      real(r8), allocatable :: senleaf_long_fdrought(:)    ! Multiplication factor for leaf longevity of senescent 
                                                           ! leaves during drought( 1.0 indicates no change)
@@ -555,6 +520,10 @@ contains
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
+    name = 'fates_leaf_flnr'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
     name = 'fates_smpso'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
@@ -803,11 +772,27 @@ contains
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
-    name = 'fates_seed_germination_rate'
+    name = 'fates_eca_vcmax_np1'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
-    name = 'fates_seed_decay_rate'
+    name = 'fates_eca_vcmax_np2'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_eca_vcmax_np3'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_eca_vcmax_np4'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_seed_germination_timescale'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_seed_decay_turnover'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
@@ -842,6 +827,7 @@ contains
     name = 'fates_phenflush_fraction'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
           dimension_names=dim_names, lower_bounds=dim_lower_bound)
+<<<<<<< HEAD
 	  
     name = 'fates_phen_cold_size_threshold'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
@@ -884,35 +870,10 @@ contains
     name = 'fates_eca_km_ptase'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
           dimension_names=dim_names, lower_bounds=dim_lower_bound)
-    
-    name = 'fates_eca_vmax_ptase'
-    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
-          dimension_names=dim_names, lower_bounds=dim_lower_bound)
-    
-    name = 'fates_eca_alpha_ptase'
-    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
-          dimension_names=dim_names, lower_bounds=dim_lower_bound)
-    
-    name = 'fates_eca_lambda_ptase'
-    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
-          dimension_names=dim_names, lower_bounds=dim_lower_bound)
+=======
 
-    name = 'fates_nfix1'
-    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
-         dimension_names=dim_names, lower_bounds=dim_lower_bound)
-
-    name = 'fates_nfix2'
-    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
-         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+>>>>>>> jaholm-cnp-photosynthesis-limits
     
-    name = 'fates_prescribed_nuptake'
-    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
-          dimension_names=dim_names, lower_bounds=dim_lower_bound)
-
-    name = 'fates_prescribed_puptake'
-    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
-          dimension_names=dim_names, lower_bounds=dim_lower_bound)    
-  
   end subroutine Register_PFT
 
   !-----------------------------------------------------------------------
@@ -1079,6 +1040,10 @@ contains
     name = 'fates_leaf_c3psn'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%c3psn)
+
+    name = 'fates_leaf_flnr'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%flnr)
 
     name = 'fates_smpso'
     call fates_params%RetreiveParameterAllocate(name=name, &
@@ -1332,13 +1297,29 @@ contains
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%tpuse)
 
-    name = 'fates_seed_germination_rate'
+    name = 'fates_eca_vcmax_np1'
     call fates_params%RetreiveParameterAllocate(name=name, &
-         data=this%germination_rate)
+         data=this%vcmax_np1)
 
-    name = 'fates_seed_decay_rate'
+    name = 'fates_eca_vcmax_np2'
     call fates_params%RetreiveParameterAllocate(name=name, &
-         data=this%seed_decay_rate)
+         data=this%vcmax_np2)
+
+    name = 'fates_eca_vcmax_np3'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%vcmax_np3)
+
+    name = 'fates_eca_vcmax_np4'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%vcmax_np4)
+
+    name = 'fates_seed_germination_timescale'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%germination_timescale)
+
+    name = 'fates_seed_decay_turnover'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%seed_decay_turnover)
 
     name = 'fates_branch_turnover'
     call fates_params%RetreiveParameterAllocate(name=name, &
@@ -1381,6 +1362,7 @@ contains
          data=this%phen_stem_drop_fraction)	 
 	 
 
+<<<<<<< HEAD
     name = 'fates_phen_cold_size_threshold'
     call fates_params%RetreiveParameterAllocate(name=name, &
           data=this%phen_cold_size_threshold)
@@ -1449,6 +1431,8 @@ contains
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%prescribed_puptake)
 
+=======
+>>>>>>> jaholm-cnp-photosynthesis-limits
   end subroutine Receive_PFT
 
   !-----------------------------------------------------------------------
@@ -2004,6 +1988,7 @@ contains
         write(fates_log(),fmt0) 'xl = ',EDPftvarcon_inst%xl
         write(fates_log(),fmt0) 'clumping_index = ',EDPftvarcon_inst%clumping_index
         write(fates_log(),fmt0) 'c3psn = ',EDPftvarcon_inst%c3psn
+        write(fates_log(),fmt0) 'flnr = ',EDPftvarcon_inst%flnr
         write(fates_log(),fmt0) 'vcmax25top = ',EDPftvarcon_inst%vcmax25top
         write(fates_log(),fmt0) 'smpso = ',EDPftvarcon_inst%smpso
         write(fates_log(),fmt0) 'smpsc = ',EDPftvarcon_inst%smpsc
@@ -2028,8 +2013,12 @@ contains
         write(fates_log(),fmt0) 'vcmaxse = ',EDPftvarcon_inst%vcmaxse
         write(fates_log(),fmt0) 'jmaxse = ',EDPftvarcon_inst%jmaxse
         write(fates_log(),fmt0) 'tpuse = ',EDPftvarcon_inst%tpuse
-        write(fates_log(),fmt0) 'germination_rate = ',EDPftvarcon_inst%germination_rate
-        write(fates_log(),fmt0) 'seed_decay_rate = ',EDPftvarcon_inst%seed_decay_rate
+        write(fates_log(),fmt0) 'vcmax_np1 = ',EDPftvarcon_inst%vcmax_np1
+        write(fates_log(),fmt0) 'vcmax_np2 = ',EDPftvarcon_inst%vcmax_np2
+        write(fates_log(),fmt0) 'vcmax_np3 = ',EDPftvarcon_inst%vcmax_np3
+        write(fates_log(),fmt0) 'vcmax_np4 = ',EDPftvarcon_inst%vcmax_np4
+        write(fates_log(),fmt0) 'germination_timescale = ',EDPftvarcon_inst%germination_timescale
+        write(fates_log(),fmt0) 'seed_decay_turnover = ',EDPftvarcon_inst%seed_decay_turnover
         write(fates_log(),fmt0) 'branch_turnover = ',EDPftvarcon_inst%branch_turnover
         write(fates_log(),fmt0) 'trim_limit = ',EDPftvarcon_inst%trim_limit
         write(fates_log(),fmt0) 'trim_inc = ',EDPftvarcon_inst%trim_inc
@@ -2038,8 +2027,12 @@ contains
         write(fates_log(),fmt0) 'taul = ',EDPftvarcon_inst%taul 
         write(fates_log(),fmt0) 'taus = ',EDPftvarcon_inst%taus
         write(fates_log(),fmt0) 'phenflush_fraction',EDpftvarcon_inst%phenflush_fraction
+<<<<<<< HEAD
         write(fates_log(),fmt0) 'phen_cold_size_threshold = ',EDPftvarcon_inst%phen_cold_size_threshold
         write(fates_log(),fmt0) 'phen_stem_drop_fraction',EDpftvarcon_inst%phen_stem_drop_fraction
+=======
+        write(fates_log(),fmt0) 'rootprof_beta = ',EDPftvarcon_inst%rootprof_beta
+>>>>>>> jaholm-cnp-photosynthesis-limits
         write(fates_log(),fmt0) 'fire_alpha_SH = ',EDPftvarcon_inst%fire_alpha_SH
         write(fates_log(),fmt0) 'allom_hmode = ',EDPftvarcon_inst%allom_hmode
         write(fates_log(),fmt0) 'allom_lmode = ',EDPftvarcon_inst%allom_lmode
@@ -2339,6 +2332,7 @@ contains
               write(fates_log(),*) ' Aborting'
               call endrun(msg=errMsg(sourcefile, __LINE__))
            end if
+<<<<<<< HEAD
            if ( ( EDPftvarcon_inst%phen_stem_drop_fraction(ipft) < 0.0_r8 ) .or. &
                 ( EDPFtvarcon_inst%phen_stem_drop_fraction(ipft) > 1 ) ) then
               write(fates_log(),*) ' Deciduous non-wood plants must keep 0-100% of their stems'
@@ -2349,6 +2343,8 @@ contains
               write(fates_log(),*) ' Aborting'
               call endrun(msg=errMsg(sourcefile, __LINE__))
            end if	
+=======
+>>>>>>> jaholm-cnp-photosynthesis-limits
         end if
 
  
