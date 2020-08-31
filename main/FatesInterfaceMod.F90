@@ -71,11 +71,9 @@ module FatesInterfaceMod
    use shr_log_mod               , only : errMsg => shr_log_errMsg
    use shr_infnan_mod            , only : nan => shr_infnan_nan, assignment(=)
 
-<<<<<<< HEAD
    ! Just use everything from FatesInterfaceTypesMod, this is
    ! its sister code
    use FatesInterfaceTypesMod
-=======
    implicit none
 
    private        ! By default everything is private
@@ -1247,12 +1245,10 @@ contains
       type(bc_in_type), intent(inout) :: bc_in
 
       ! Input boundaries
-<<<<<<< HEAD
       ! Warning: these "z" type variables
       ! are written only once at the beginning
       ! so THIS ROUTINE SHOULD NOT BE CALLED AFTER
       ! INITIALIZATION
-=======
       
       this%bc_in(s)%t_veg24_si     = 0.0_r8
       this%bc_in(s)%t_veg24_pa(:)  = 0.0_r8

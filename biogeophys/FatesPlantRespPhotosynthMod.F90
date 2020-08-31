@@ -253,14 +253,10 @@ contains
 
     associate(  &
          c3psn     => EDPftvarcon_inst%c3psn  , &
-<<<<<<< HEAD
          slatop    => prt_params%slatop , &  ! specific leaf area at top of canopy, 
                                              ! projected area basis [m^2/gC]
          woody     => prt_params%woody,   &  ! Is vegetation woody or not? 
-         stomatal_intercept   => EDPftvarcon_inst%stomatal_intercept ) !Unstressed minimum stomatal conductance
-
-
-=======
+         stomatal_intercept   => EDPftvarcon_inst%stomatal_intercept, &  !Unstressed minimum stomatal conductance
          slatop    => EDPftvarcon_inst%slatop , & ! specific leaf area at top of canopy, 
                                                   ! projected area basis [m^2/gC]
          woody     => EDPftvarcon_inst%woody  , & ! Is vegetation woody or not? 
@@ -277,7 +273,6 @@ contains
       ! umol/gRubisco/s
       act25 = act25 * 1000.0_r8 / 60.0_r8
 
->>>>>>> parteh-acnp-withlive-w-photo
       do s = 1,nsites
 
          ! Multi-layer parameters scaled by leaf nitrogen profile.
@@ -482,22 +477,14 @@ contains
                                  
                               case (prt_cnp_flex_allom_hyp)
 
-<<<<<<< HEAD
-!                                 leaf_c  = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
-!                                 leaf_n  = currentCohort%prt%GetState(leaf_organ, nitrogen_element)
-!                                 lnc_top = leaf_n / (slatop(ft) * leaf_c )
-
-                                 lnc_top  = prt_params%nitr_stoich_p1(ft,leaf_organ)/slatop(ft)
-                                 
-=======
+                                 !lnc_top  = prt_params%nitr_stoich_p1(ft,leaf_organ)/slatop(ft)
                                  leaf_c  = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
-                                 leaf_n  = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
+                                 leaf_n  = currentCohort%prt%GetState(leaf_organ, nitrogen_element)
                                  lnc_top = leaf_n / (slatop(ft) * leaf_c )
-                                 !lpc_top = leaf_p / (slatop(ft) * leaf_c )
-                                 !lnc_top = min(max(lnc_top,0.25_r8),3.0_r8) !based on doi: 10.1002/ece3.1173
-                                 !lpc_top = min(max(lpc_top,0.014_r8),0.85_r8) !based on doi: 10.1002/ece3.1173
+                                 lpc_top = leaf_p / (slatop(ft) * leaf_c )
+                                 lnc_top = min(max(lnc_top,0.25_r8),3.0_r8) !based on doi: 10.1002/ece3.1173
+                                 lpc_top = min(max(lpc_top,0.014_r8),0.85_r8) !based on doi: 10.1002/ece3.1173
 
->>>>>>> parteh-acnp-withlive-w-photo
                               end select
 
                               lmr25top = 2.525e-6_r8 * (1.5_r8 ** ((25._r8 - 20._r8)/10._r8))
