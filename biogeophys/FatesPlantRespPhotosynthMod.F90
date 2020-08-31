@@ -1821,7 +1821,7 @@ contains
 
       use EDPftvarcon         , only : EDPftvarcon_inst
       use EDPftvarcon      , only : EDPftvarcon_inst
-      use pftvarcon        , only : vcmax_np1, vcmax_np2, vcmax_np3, vcmax_np4, jmax_np1, jmax_np2, jmax_np3
+      use pftvarcon        , only : vcmax_np1, vcmax_np2, vcmax_np3, vcmax_np4
       use FatesConstantsMod, only : tfrz => t_water_freeze_k_1atm
 
       ! Arguments
@@ -1846,7 +1846,6 @@ contains
       real(r8), intent(out) :: jmax              ! maximum electron transport rate 
                                                  ! (umol electrons/m**2/s)
       real(r8), intent(out) :: tpu               ! triose phosphate utilization rate 
-                                                 ! (umol CO2/m**2/s)
       real(r8), intent(out) :: co2_rcurve_islope ! initial slope of CO2 response curve (C4 plants)
       
       ! Locals
@@ -1875,6 +1874,9 @@ contains
       real(r8) :: vcmaxc         ! scaling factor for high temperature inhibition (25 C = 1.0)
       real(r8) :: jmaxc          ! scaling factor for high temperature inhibition (25 C = 1.0)
       real(r8) :: tpuc           ! scaling factor for high temperature inhibition (25 C = 1.0)
+      real(r8) :: jmax_np1 = 1.246_r8       ! jmax~np relationship coefficient
+      real(r8) :: jmax_np2 = 0.886_r8       ! jmax~np relationship coefficient
+      real(r8) :: jmax_np3 = 0.089_r8       ! jmax~np relationship coefficient
 
       vcmaxha = EDPftvarcon_inst%vcmaxha(FT)
       jmaxha  = EDPftvarcon_inst%jmaxha(FT)
