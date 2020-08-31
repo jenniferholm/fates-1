@@ -208,6 +208,9 @@ contains
                                    ! over each cohort x layer.
     real(r8) :: cohort_eleaf_area  ! This is the effective leaf area [m2] reported by each cohort
     real(r8) :: lnc_top            ! Leaf nitrogen content per unit area at canopy top [gN/m2]
+    real(r8) :: lpc_top            ! Leaf phosphorus content per unit area at canopy top [gP/m2]
+    real(r8) :: fnr                ! (gRubisco/gN in Rubisco)
+    real(r8) :: act25              ! (umol/mgRubisco/min) Rubisco activity at 25 C
     real(r8) :: lmr25top           ! canopy top leaf maint resp rate at 25C 
                                    ! for this plant or pft (umol CO2/m**2/s)
     real(r8) :: leaf_inc           ! LAI-only portion of the vegetation increment of dinc_ed
@@ -250,12 +253,31 @@ contains
 
     associate(  &
          c3psn     => EDPftvarcon_inst%c3psn  , &
+<<<<<<< HEAD
          slatop    => prt_params%slatop , &  ! specific leaf area at top of canopy, 
                                              ! projected area basis [m^2/gC]
          woody     => prt_params%woody,   &  ! Is vegetation woody or not? 
          stomatal_intercept   => EDPftvarcon_inst%stomatal_intercept ) !Unstressed minimum stomatal conductance
 
 
+=======
+         slatop    => EDPftvarcon_inst%slatop , & ! specific leaf area at top of canopy, 
+                                                  ! projected area basis [m^2/gC]
+         woody     => EDPftvarcon_inst%woody  , & ! Is vegetation woody or not? 
+         flnr      => EDPftvarcon_inst%flnr)      ! Input: fraction of leaf N in the Rubisco enzyme (gN Rubisco / gN leaf) 
+
+      bbbopt(0) = ED_val_bbopt_c4
+      bbbopt(1) = ED_val_bbopt_c3
+      
+
+      ! vcmax25 parameters from Bonan et al (2011) JGR, 116, doi:10.1029/2010JG001593
+      fnr = 7.16_r8
+      act25 = 3.6_r8 !umol/mgRubisco/min
+      ! Convert rubisco activity units from umol/mgRubisco/min ->
+      ! umol/gRubisco/s
+      act25 = act25 * 1000.0_r8 / 60.0_r8
+
+>>>>>>> parteh-acnp-withlive-w-photo
       do s = 1,nsites
 
          ! Multi-layer parameters scaled by leaf nitrogen profile.
@@ -460,12 +482,22 @@ contains
                                  
                               case (prt_cnp_flex_allom_hyp)
 
+<<<<<<< HEAD
 !                                 leaf_c  = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
 !                                 leaf_n  = currentCohort%prt%GetState(leaf_organ, nitrogen_element)
 !                                 lnc_top = leaf_n / (slatop(ft) * leaf_c )
 
                                  lnc_top  = prt_params%nitr_stoich_p1(ft,leaf_organ)/slatop(ft)
                                  
+=======
+                                 leaf_c  = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
+                                 leaf_n  = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
+                                 lnc_top = leaf_n / (slatop(ft) * leaf_c )
+                                 !lpc_top = leaf_p / (slatop(ft) * leaf_c )
+                                 !lnc_top = min(max(lnc_top,0.25_r8),3.0_r8) !based on doi: 10.1002/ece3.1173
+                                 !lpc_top = min(max(lpc_top,0.014_r8),0.85_r8) !based on doi: 10.1002/ece3.1173
+
+>>>>>>> parteh-acnp-withlive-w-photo
                               end select
 
                               lmr25top = 2.525e-6_r8 * (1.5_r8 ** ((25._r8 - 20._r8)/10._r8))
@@ -499,6 +531,7 @@ contains
                                                              currentCohort%kp25top,              &  ! in
                                                              nscaler,                            &  ! in
                                                              bc_in(s)%t_veg_pa(ifp),             &  ! in
+                                                             bc_in(s)%t_a10_pa(ifp),             &  ! in
                                                              btran_eff,                          &  ! in
                                                              vcmax_z,                            &  ! out
                                                              jmax_z,                             &  ! out
@@ -1802,6 +1835,7 @@ contains
                                          co2_rcurve_islope25top_ft, &
                                          nscaler,    &
                                          veg_tempk,      &
+                                         temp_a10,  &
                                          btran, &
                                          vcmax, &
                                          jmax, &
@@ -1823,6 +1857,8 @@ contains
       ! ---------------------------------------------------------------------------------
 
       use EDPftvarcon         , only : EDPftvarcon_inst
+      use EDPftvarcon      , only : EDPftvarcon_inst
+      use pftvarcon        , only : vcmax_np1, vcmax_np2, vcmax_np3, vcmax_np4
       use FatesConstantsMod, only : tfrz => t_water_freeze_k_1atm
 
       ! Arguments
@@ -1839,14 +1875,14 @@ contains
                                               ! for this pft (umol CO2/m**2/s)
       real(r8), intent(in) :: co2_rcurve_islope25top_ft ! initial slope of CO2 response curve
                                               ! (C4 plants) at 25C, canopy top, this pft
-      real(r8), intent(in) :: veg_tempk           ! vegetation temperature
+      real(r8), intent(in) :: veg_tempk       ! vegetation temperature
+      real(r8), intent(in) :: temp_a10        ! 10-day running mean of 2m temperature (K)
       real(r8), intent(in) :: btran           ! transpiration wetness factor (0 to 1) 
                                                     
       real(r8), intent(out) :: vcmax             ! maximum rate of carboxylation (umol co2/m**2/s)
       real(r8), intent(out) :: jmax              ! maximum electron transport rate 
                                                  ! (umol electrons/m**2/s)
       real(r8), intent(out) :: tpu               ! triose phosphate utilization rate 
-                                                 ! (umol CO2/m**2/s)
       real(r8), intent(out) :: co2_rcurve_islope ! initial slope of CO2 response curve (C4 plants)
       
       ! Locals
@@ -1875,6 +1911,9 @@ contains
       real(r8) :: vcmaxc         ! scaling factor for high temperature inhibition (25 C = 1.0)
       real(r8) :: jmaxc          ! scaling factor for high temperature inhibition (25 C = 1.0)
       real(r8) :: tpuc           ! scaling factor for high temperature inhibition (25 C = 1.0)
+      real(r8) :: jmax_np1 = 1.246_r8       ! jmax~np relationship coefficient
+      real(r8) :: jmax_np2 = 0.886_r8       ! jmax~np relationship coefficient
+      real(r8) :: jmax_np3 = 0.089_r8       ! jmax~np relationship coefficient
 
       vcmaxha = EDPftvarcon_inst%vcmaxha(FT)
       jmaxha  = EDPftvarcon_inst%jmaxha(FT)
@@ -1883,10 +1922,10 @@ contains
       vcmaxhd = EDPftvarcon_inst%vcmaxhd(FT)
       jmaxhd  = EDPftvarcon_inst%jmaxhd(FT)
       tpuhd   = EDPftvarcon_inst%tpuhd(FT)
-      
-      vcmaxse = EDPftvarcon_inst%vcmaxse(FT)
-      jmaxse  = EDPftvarcon_inst%jmaxse(FT)
-      tpuse   = EDPftvarcon_inst%tpuse(FT)
+     
+      vcmaxse = 668.39_r8 - 1.07_r8 * min(max((temp_a10-tfrz),11._r8),35._r8) !Kattge & Knorr 2007
+      jmaxse  = 659.70_r8 - 0.75_r8 * min(max((temp_a10-tfrz),11._r8),35._r8) !Kattge & Knorr 2007
+      tpuse = vcmaxse
 
       vcmaxc = fth25_f(vcmaxhd, vcmaxse)
       jmaxc  = fth25_f(jmaxhd, jmaxse)

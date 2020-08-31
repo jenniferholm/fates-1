@@ -72,7 +72,7 @@ module EDPftvarcon
                                                      ! decreases light interception
      real(r8), allocatable :: c3psn(:)               ! index defining the photosynthetic 
                                                      ! pathway C4 = 0,  C3 = 1
-    
+     real(r8), allocatable :: flnr(:)                ! fraction of leaf N in Rubisco    
      real(r8), allocatable :: smpso(:)               ! Soil water potential at full stomatal opening 
                                                      ! (non-HYDRO mode only) [mm]
      real(r8), allocatable :: smpsc(:)               ! Soil water potential at full stomatal closure 
@@ -102,9 +102,18 @@ module EDPftvarcon
      real(r8), allocatable :: vcmaxse(:)
      real(r8), allocatable :: jmaxse(:)
      real(r8), allocatable :: tpuse(:)
+<<<<<<< HEAD
      real(r8), allocatable :: germination_rate(:)        ! Fraction of seed mass germinating per year (yr-1)
      real(r8), allocatable :: seed_decay_rate(:)         ! Fraction of seed mass (both germinated and 
                                                          ! ungerminated), decaying per year    (yr-1)
+=======
+     real(r8), allocatable :: vcmax_np1(:)
+     real(r8), allocatable :: vcmax_np2(:)
+     real(r8), allocatable :: vcmax_np3(:)
+     real(r8), allocatable :: vcmax_np4(:)
+     real(r8), allocatable :: germination_timescale(:)
+     real(r8), allocatable :: seed_decay_turnover(:)
+>>>>>>> parteh-acnp-withlive-w-photo
      
      real(r8), allocatable :: trim_limit(:)              ! Limit to reductions in leaf area w stress (m2/m2)
      real(r8), allocatable :: trim_inc(:)                ! Incremental change in trimming function   (m2/m2)
@@ -380,6 +389,10 @@ contains
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
+    name = 'fates_leaf_flnr'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
     name = 'fates_smpso'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
@@ -610,6 +623,26 @@ contains
     name = 'fates_eca_lambda_ptase'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
          dimension_names=dim_names, lower_bounds=dim_lower_bound)
+<<<<<<< HEAD
+=======
+
+    name = 'fates_eca_vcmax_np1'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_eca_vcmax_np2'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_eca_vcmax_np3'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+    name = 'fates_eca_vcmax_np4'
+    call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
+
+>>>>>>> parteh-acnp-withlive-w-photo
     
     name = 'fates_prescribed_nuptake'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
@@ -712,6 +745,10 @@ contains
     name = 'fates_leaf_c3psn'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%c3psn)
+
+    name = 'fates_leaf_flnr'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%flnr)
 
     name = 'fates_smpso'
     call fates_params%RetreiveParameterAllocate(name=name, &
@@ -867,7 +904,27 @@ contains
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%tpuse)
 
+<<<<<<< HEAD
     name = 'fates_seed_germination_rate'
+=======
+    name = 'fates_eca_vcmax_np1'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%vcmax_np1)
+
+    name = 'fates_eca_vcmax_np2'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%vcmax_np2)
+
+    name = 'fates_eca_vcmax_np3'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%vcmax_np3)
+
+    name = 'fates_eca_vcmax_np4'
+    call fates_params%RetreiveParameterAllocate(name=name, &
+         data=this%vcmax_np4)
+
+    name = 'fates_seed_germination_timescale'
+>>>>>>> parteh-acnp-withlive-w-photo
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%germination_rate)
 
@@ -1336,6 +1393,7 @@ contains
         write(fates_log(),fmt0) 'xl = ',EDPftvarcon_inst%xl
         write(fates_log(),fmt0) 'clumping_index = ',EDPftvarcon_inst%clumping_index
         write(fates_log(),fmt0) 'c3psn = ',EDPftvarcon_inst%c3psn
+        write(fates_log(),fmt0) 'flnr = ',EDPftvarcon_inst%flnr
         write(fates_log(),fmt0) 'vcmax25top = ',EDPftvarcon_inst%vcmax25top
         write(fates_log(),fmt0) 'smpso = ',EDPftvarcon_inst%smpso
         write(fates_log(),fmt0) 'smpsc = ',EDPftvarcon_inst%smpsc
@@ -1358,8 +1416,18 @@ contains
         write(fates_log(),fmt0) 'vcmaxse = ',EDPftvarcon_inst%vcmaxse
         write(fates_log(),fmt0) 'jmaxse = ',EDPftvarcon_inst%jmaxse
         write(fates_log(),fmt0) 'tpuse = ',EDPftvarcon_inst%tpuse
+<<<<<<< HEAD
         write(fates_log(),fmt0) 'germination_timescale = ',EDPftvarcon_inst%germination_rate
         write(fates_log(),fmt0) 'seed_decay_turnover = ',EDPftvarcon_inst%seed_decay_rate
+=======
+        write(fates_log(),fmt0) 'vcmax_np1 = ',EDPftvarcon_inst%vcmax_np1
+        write(fates_log(),fmt0) 'vcmax_np2 = ',EDPftvarcon_inst%vcmax_np2
+        write(fates_log(),fmt0) 'vcmax_np3 = ',EDPftvarcon_inst%vcmax_np3
+        write(fates_log(),fmt0) 'vcmax_np4 = ',EDPftvarcon_inst%vcmax_np4
+        write(fates_log(),fmt0) 'germination_timescale = ',EDPftvarcon_inst%germination_timescale
+        write(fates_log(),fmt0) 'seed_decay_turnover = ',EDPftvarcon_inst%seed_decay_turnover
+        write(fates_log(),fmt0) 'branch_turnover = ',EDPftvarcon_inst%branch_turnover
+>>>>>>> parteh-acnp-withlive-w-photo
         write(fates_log(),fmt0) 'trim_limit = ',EDPftvarcon_inst%trim_limit
         write(fates_log(),fmt0) 'trim_inc = ',EDPftvarcon_inst%trim_inc
         write(fates_log(),fmt0) 'rhol = ',EDPftvarcon_inst%rhol
