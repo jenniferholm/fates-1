@@ -712,7 +712,6 @@ module FatesInterfaceMod
       
 
    end type bc_out_type
->>>>>>> parteh-acnp-withlive-w-photo
 
 
    implicit none
@@ -1256,7 +1255,7 @@ contains
       this%bc_in(s)%relhumid24_pa(:) = 0.0_r8
       this%bc_in(s)%wind24_pa(:)     = 0.0_r8
  
-      this%bc_in(s)%t_a10_pa(:)      = 0.0_r8 !Does this temp input need to be 0?
+      this%bc_in(s)%t_a10_pa(:)         = 0.0_r8 !Does this temp input need to be 0?
       this%bc_in(s)%solad_parb(:,:)     = 0.0_r8
       this%bc_in(s)%solai_parb(:,:)     = 0.0_r8
       this%bc_in(s)%smp_sl(:)           = 0.0_r8
@@ -1275,7 +1274,6 @@ contains
       this%bc_in(s)%snow_depth_si       = 0.0_r8
       this%bc_in(s)%frac_sno_eff_si     = 0.0_r8
       
->>>>>>> parteh-acnp-withlive-w-photo
       if(do_fates_salinity)then
          bc_in%salinity_sl(:)     = bgc_soil_salinity
       endif

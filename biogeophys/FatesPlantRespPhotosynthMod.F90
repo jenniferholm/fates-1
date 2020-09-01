@@ -477,11 +477,13 @@ contains
                                  
                               case (prt_cnp_flex_allom_hyp)
 
-                                 !lnc_top  = prt_params%nitr_stoich_p1(ft,leaf_organ)/slatop(ft)
-                                 leaf_c  = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
-                                 leaf_n  = currentCohort%prt%GetState(leaf_organ, nitrogen_element)
-                                 lnc_top = leaf_n / (slatop(ft) * leaf_c )
-                                 lpc_top = leaf_p / (slatop(ft) * leaf_c )
+                                ! leaf_c  = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
+                                ! leaf_n  = currentCohort%prt%GetState(leaf_organ, nitrogen_element)
+                                ! lnc_top = leaf_n / (slatop(ft) * leaf_c )
+                                ! lpc_top = leaf_p / (slatop(ft) * leaf_c )
+                                 
+                                 lnc_top = prt_params%nitr_stoich_p1(ft,leaf_organ)/slatop(ft)
+                                 lpc_top = prt_params%phos_stoich_p1(ft,leaf_organ)/slatop(ft)
                                  lnc_top = min(max(lnc_top,0.25_r8),3.0_r8) !based on doi: 10.1002/ece3.1173
                                  lpc_top = min(max(lpc_top,0.014_r8),0.85_r8) !based on doi: 10.1002/ece3.1173
 
@@ -519,6 +521,7 @@ contains
                                                              nscaler,                            &  ! in
                                                              bc_in(s)%t_veg_pa(ifp),             &  ! in
                                                              bc_in(s)%t_a10_pa(ifp),             &  ! in
+                                                             bc_in(s)%dayl_factor_pa(ifp),       &  ! in
                                                              btran_eff,                          &  ! in
                                                              vcmax_z,                            &  ! out
                                                              jmax_z,                             &  ! out
@@ -1823,6 +1826,7 @@ contains
                                          nscaler,    &
                                          veg_tempk,      &
                                          temp_a10,  &
+                                         dayl_factor, &
                                          btran, &
                                          vcmax, &
                                          jmax, &
@@ -1843,7 +1847,6 @@ contains
       ! co2_rcurve_islope: initial slope of CO2 response curve (C4 plants)
       ! ---------------------------------------------------------------------------------
 
-      use EDPftvarcon         , only : EDPftvarcon_inst
       use EDPftvarcon      , only : EDPftvarcon_inst
       use pftvarcon        , only : vcmax_np1, vcmax_np2, vcmax_np3, vcmax_np4
       use FatesConstantsMod, only : tfrz => t_water_freeze_k_1atm
@@ -1864,6 +1867,7 @@ contains
                                               ! (C4 plants) at 25C, canopy top, this pft
       real(r8), intent(in) :: veg_tempk       ! vegetation temperature
       real(r8), intent(in) :: temp_a10        ! 10-day running mean of 2m temperature (K)
+      real(r8), intent(in) :: dayl_factor     ! daylength scaling factor (0-1)
       real(r8), intent(in) :: btran           ! transpiration wetness factor (0 to 1) 
                                                     
       real(r8), intent(out) :: vcmax             ! maximum rate of carboxylation (umol co2/m**2/s)
@@ -1924,6 +1928,16 @@ contains
          tpu               = 0._r8
          co2_rcurve_islope = 0._r8
       else                                     ! day time
+
+         select case(hlm_parteh_mode)
+         case (prt_cnp_flex_allom_hyp)
+                 vcmax25top_ft = exp(vcmax_np1(ft) + vcmax_np2(ft)*log(lnc_top) + &
+                          vcmax_np3(ft)*log(lpc_top) + vcmax_np4(ft)*log(lnc_top)*log(lpc_top))&
+                          * dayl_factor
+                     jmax25top_ft = exp(jmax_np1 + jmax_np2*log(vcmax25top_ft) + jmax_np3*log(lpc_top)) * dayl_factor
+                     vcmax25 = min(max(vcmax25top_ft, 10.0_r8), 150.0_r8)
+                     jmax25 = min(max(jmax25top_ft, 10.0_r8), 250.0_r8)
+         end select
 
          ! Vcmax25top was already calculated to derive the nscaler function
          vcmax25 = vcmax25top_ft * nscaler
