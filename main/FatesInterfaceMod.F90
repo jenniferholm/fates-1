@@ -74,6 +74,7 @@ module FatesInterfaceMod
    ! Just use everything from FatesInterfaceTypesMod, this is
    ! its sister code
    use FatesInterfaceTypesMod
+   
    implicit none
 
    private        ! By default everything is private

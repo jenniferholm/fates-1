@@ -105,8 +105,6 @@ module EDPftvarcon
      real(r8), allocatable :: germination_rate(:)        ! Fraction of seed mass germinating per year (yr-1)
      real(r8), allocatable :: seed_decay_rate(:)         ! Fraction of seed mass (both germinated and 
                                                          ! ungerminated), decaying per year    (yr-1)
-     real(r8), allocatable :: germination_timescale(:)
-     real(r8), allocatable :: seed_decay_turnover(:)
      real(r8), allocatable :: trim_limit(:)              ! Limit to reductions in leaf area w stress (m2/m2)
      real(r8), allocatable :: trim_inc(:)                ! Incremental change in trimming function   (m2/m2)
      real(r8), allocatable :: rhol(:, :)
@@ -616,7 +614,7 @@ contains
 
     name = 'fates_eca_lambda_ptase'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
-         dimension_names=dim_names, lower_bounds=dim_lower_bound
+         dimension_names=dim_names, lower_bounds=dim_lower_bound)
 
     name = 'fates_eca_vcmax_np1'
     call fates_params%RegisterParameter(name=name, dimension_shape=dimension_shape_1d, &
@@ -908,7 +906,7 @@ contains
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%eca_vcmax_np4)
 
-    name = 'fates_seed_germination_timescale'
+    name = 'fates_seed_germination_rate'
     call fates_params%RetreiveParameterAllocate(name=name, &
          data=this%germination_rate)
 
@@ -1400,15 +1398,12 @@ contains
         write(fates_log(),fmt0) 'vcmaxse = ',EDPftvarcon_inst%vcmaxse
         write(fates_log(),fmt0) 'jmaxse = ',EDPftvarcon_inst%jmaxse
         write(fates_log(),fmt0) 'tpuse = ',EDPftvarcon_inst%tpuse
-        write(fates_log(),fmt0) 'germination_timescale = ',EDPftvarcon_inst%germination_rate
-        write(fates_log(),fmt0) 'seed_decay_turnover = ',EDPftvarcon_inst%seed_decay_rate=
         write(fates_log(),fmt0) 'eca_vcmax_np1 = ',EDPftvarcon_inst%eca_vcmax_np1
         write(fates_log(),fmt0) 'eca_vcmax_np2 = ',EDPftvarcon_inst%eca_vcmax_np2
         write(fates_log(),fmt0) 'eca_vcmax_np3 = ',EDPftvarcon_inst%eca_vcmax_np3
         write(fates_log(),fmt0) 'eca_vcmax_np4 = ',EDPftvarcon_inst%eca_vcmax_np4
-        write(fates_log(),fmt0) 'germination_timescale = ',EDPftvarcon_inst%germination_timescale
-        write(fates_log(),fmt0) 'seed_decay_turnover = ',EDPftvarcon_inst%seed_decay_turnover
-        write(fates_log(),fmt0) 'branch_turnover = ',EDPftvarcon_inst%branch_turnover
+        write(fates_log(),fmt0) 'germination_timescale = ',EDPftvarcon_inst%germination_rate
+        write(fates_log(),fmt0) 'seed_decay_turnover = ',EDPftvarcon_inst%seed_decay_rate
         write(fates_log(),fmt0) 'trim_limit = ',EDPftvarcon_inst%trim_limit
         write(fates_log(),fmt0) 'trim_inc = ',EDPftvarcon_inst%trim_inc
         write(fates_log(),fmt0) 'rhol = ',EDPftvarcon_inst%rhol
