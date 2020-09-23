@@ -256,15 +256,9 @@ contains
          slatop    => prt_params%slatop , &  ! specific leaf area at top of canopy, 
                                              ! projected area basis [m^2/gC]
          woody     => prt_params%woody,   &  ! Is vegetation woody or not? 
-         stomatal_intercept   => EDPftvarcon_inst%stomatal_intercept, &  !Unstressed minimum stomatal conductance
-         slatop    => EDPftvarcon_inst%slatop , & ! specific leaf area at top of canopy, 
-                                                  ! projected area basis [m^2/gC]
-         woody     => EDPftvarcon_inst%woody  , & ! Is vegetation woody or not? 
+         stomatal_intercept   => EDPftvarcon_inst%stomatal_intercept, &  !Unstressed minimum stomatal conductance 
          flnr      => EDPftvarcon_inst%flnr)      ! Input: fraction of leaf N in the Rubisco enzyme (gN Rubisco / gN leaf) 
 
-      bbbopt(0) = ED_val_bbopt_c4
-      bbbopt(1) = ED_val_bbopt_c3
-      
 
       ! vcmax25 parameters from Bonan et al (2011) JGR, 116, doi:10.1029/2010JG001593
       fnr = 7.16_r8
@@ -523,10 +517,12 @@ contains
                                                              bc_in(s)%t_a10_pa(ifp),             &  ! in
                                                              bc_in(s)%dayl_factor_pa(ifp),       &  ! in
                                                              btran_eff,                          &  ! in
+                                                             lnc_top,                            &  ! in
+                                                             lpc_top,                            &  ! in
                                                              vcmax_z,                            &  ! out
                                                              jmax_z,                             &  ! out
                                                              tpu_z,                              &  ! out
-                                                             kp_z )                                 ! out
+                                                             kp_z)
                               
                               ! Part IX: This call calculates the actual photosynthesis for the 
                               ! leaf layer, as well as the stomatal resistance and the net assimilated carbon.
@@ -1828,6 +1824,8 @@ contains
                                          temp_a10,  &
                                          dayl_factor, &
                                          btran, &
+                                         lnc, &
+                                         lpc, &
                                          vcmax, &
                                          jmax, &
                                          tpu, &
@@ -1869,7 +1867,9 @@ contains
       real(r8), intent(in) :: temp_a10        ! 10-day running mean of 2m temperature (K)
       real(r8), intent(in) :: dayl_factor     ! daylength scaling factor (0-1)
       real(r8), intent(in) :: btran           ! transpiration wetness factor (0 to 1) 
-                                                    
+      real(r8), intent(in) :: lnc               ! Leaf nitrogen content per unit area at canopy top [gN/m2]
+      real(r8), intent(in) :: lpc               ! Leaf phos content per unit area at canopy top [gN/m2]
+
       real(r8), intent(out) :: vcmax             ! maximum rate of carboxylation (umol co2/m**2/s)
       real(r8), intent(out) :: jmax              ! maximum electron transport rate 
                                                  ! (umol electrons/m**2/s)
@@ -1886,6 +1886,7 @@ contains
                                       ! (umol CO2/m**2/s)
       real(r8) :: co2_rcurve_islope25 ! leaf layer: Initial slope of CO2 response curve 
                                       ! (C4 plants) at 25C
+      !real(r8) :: !placeholder for defining log 
       
       
       ! Parameters
@@ -1905,6 +1906,8 @@ contains
       real(r8) :: jmax_np1 = 1.246_r8       ! jmax~np relationship coefficient
       real(r8) :: jmax_np2 = 0.886_r8       ! jmax~np relationship coefficient
       real(r8) :: jmax_np3 = 0.089_r8       ! jmax~np relationship coefficient
+      real(r8) :: vcmax25top_eca_ft         ! canopy top maximum rate of carboxylation at 25C, but eca placeholder
+      real(r8) :: jmax25top_eca_ft          ! canopy top maximum electron transport rate at 25C, but eca placeholder
 
       vcmaxha = EDPftvarcon_inst%vcmaxha(FT)
       jmaxha  = EDPftvarcon_inst%jmaxha(FT)
@@ -1922,6 +1925,9 @@ contains
       jmaxc  = fth25_f(jmaxhd, jmaxse)
       tpuc   = fth25_f(tpuhd, tpuse)
 
+      vcmax25top_eca_ft = vcmax25top_ft
+      jmax25top_eca_ft = jmax25top_ft
+
       if ( parsun_lsl <= 0._r8) then           ! night time
          vcmax             = 0._r8
          jmax              = 0._r8
@@ -1931,12 +1937,14 @@ contains
 
          select case(hlm_parteh_mode)
          case (prt_cnp_flex_allom_hyp)
-                 vcmax25top_ft = exp(vcmax_np1(ft) + vcmax_np2(ft)*log(lnc_top) + &
-                          vcmax_np3(ft)*log(lpc_top) + vcmax_np4(ft)*log(lnc_top)*log(lpc_top))&
+            if (hlm_parteh_mode .eq. prt_cnp_flex_allom_hyp) then
+                 vcmax25top_eca_ft = exp(vcmax_np1(ft) + vcmax_np2(ft)*log(lnc) + &
+                          vcmax_np3(ft)*log(lpc) + vcmax_np4(ft)*log(lnc)*log(lpc))&
                           * dayl_factor
-                     jmax25top_ft = exp(jmax_np1 + jmax_np2*log(vcmax25top_ft) + jmax_np3*log(lpc_top)) * dayl_factor
-                     vcmax25 = min(max(vcmax25top_ft, 10.0_r8), 150.0_r8)
-                     jmax25 = min(max(jmax25top_ft, 10.0_r8), 250.0_r8)
+                 jmax25top_eca_ft = exp(jmax_np1 + jmax_np2*log(vcmax25top_ft) + jmax_np3*log(lpc)) * dayl_factor
+                 vcmax25 = (min(max(vcmax25top_eca_ft, 10.0_r8), 150.0_r8)) * nscaler
+                 jmax25 = (min(max(jmax25top_eca_ft, 10.0_r8), 250.0_r8)) * nscaler
+            end if
          end select
 
          ! Vcmax25top was already calculated to derive the nscaler function
