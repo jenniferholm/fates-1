@@ -89,7 +89,7 @@ module EDCohortDynamicsMod
   use PRTAllometricCarbonMod, only : ac_bc_in_id_lstat
   use PRTAllometricCNPMod,    only : cnp_allom_prt_vartypes
   use PRTAllometricCNPMod,    only : acnp_bc_in_id_pft, acnp_bc_in_id_ctrim
-  use PRTAllometricCNPMod,    only : acnp_bc_in_id_leafon, acnp_bc_inout_id_dbh
+  use PRTAllometricCNPMod,    only : acnp_bc_in_id_lstat, acnp_bc_inout_id_dbh
   use PRTAllometricCNPMod,    only : acnp_bc_inout_id_rmaint_def, acnp_bc_in_id_netdc
   use PRTAllometricCNPMod,    only : acnp_bc_in_id_netdn, acnp_bc_in_id_netdp
   use PRTAllometricCNPMod,    only : acnp_bc_out_id_cefflux, acnp_bc_out_id_nefflux
@@ -363,10 +363,14 @@ contains
   subroutine InitPRTBoundaryConditions(new_cohort)
     
     ! Set the boundary conditions that flow in an out of the PARTEH
-    ! allocation hypotheses.  These are pointers in the PRT objects that
-    ! point to values outside in the FATES model.
-    
-    ! Example:
+    ! allocation hypotheses.  Each of these calls to "RegsterBC" are simply
+    ! setting pointers.
+    ! For instance, if the hypothesis wants to know what
+    ! the DBH of the plant is, then we pass in the dbh as an argument (new_cohort%dbh),
+    ! and also tell it which boundary condition we are talking about (which is
+    ! defined by an integer index (ac_bc_inout_id_dbh)
+    !
+    ! Again, elaborated Example:
     ! "ac_bc_inout_id_dbh" is the unique integer that defines the object index
     ! for the allometric carbon "ac" boundary condition "bc" for DBH "dbh"
     ! that is classified as input and output "inout".
@@ -394,7 +398,7 @@ contains
 
        call new_cohort%prt%RegisterBCIn(acnp_bc_in_id_pft,bc_ival = new_cohort%pft)
        call new_cohort%prt%RegisterBCIn(acnp_bc_in_id_ctrim,bc_rval = new_cohort%canopy_trim)
-       call new_cohort%prt%RegisterBCIn(acnp_bc_in_id_leafon,bc_ival = new_cohort%status_coh)
+       call new_cohort%prt%RegisterBCIn(acnp_bc_in_id_lstat,bc_ival = new_cohort%status_coh)
        call new_cohort%prt%RegisterBCIn(acnp_bc_in_id_netdc, bc_rval = new_cohort%npp_acc)
        call new_cohort%prt%RegisterBCIn(acnp_bc_in_id_netdn, bc_rval = new_cohort%daily_n_uptake)
        call new_cohort%prt%RegisterBCIn(acnp_bc_in_id_netdp, bc_rval = new_cohort%daily_p_uptake)
@@ -1369,6 +1373,12 @@ contains
                                       currentCohort%gpp_acc_hold   = &
                                            (currentCohort%n*currentCohort%gpp_acc_hold + &
                                            nextc%n*nextc%gpp_acc_hold)/newn
+                                      
+                                      ! This carbon variable needs continuity from day to day, as resp_m_def
+                                      ! needs to hold mass and be conservative
+                                      
+                                      currentCohort%resp_m_def = (currentCohort%n*currentCohort%resp_m_def + & 
+                                           nextc%n*nextc%resp_m_def)/newn
 
                                       currentCohort%dmort          = (currentCohort%n*currentCohort%dmort       + &
                                            nextc%n*nextc%dmort)/newn
@@ -1411,10 +1421,7 @@ contains
                                       currentCohort%daily_p_need2 = (currentCohort%n*currentCohort%daily_p_need2 + & 
                                            nextc%n*nextc%daily_p_need2)/newn
 
-                                      ! This carbon variable needs continuity from day to day, as resp_m_def
-                                      ! needs to hold mass and be conservative
-                                      currentCohort%resp_m_def = (currentCohort%n*currentCohort%resp_m_def + & 
-                                           nextc%n*nextc%resp_m_def)/newn
+                                      
                                       
                                       ! logging mortality, Yi Xu
                                       currentCohort%lmort_direct = (currentCohort%n*currentCohort%lmort_direct + &

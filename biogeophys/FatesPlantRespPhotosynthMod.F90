@@ -475,6 +475,13 @@ contains
                                 ! leaf_n  = currentCohort%prt%GetState(leaf_organ, nitrogen_element)
                                 ! lnc_top = leaf_n / (slatop(ft) * leaf_c )
                                 ! lpc_top = leaf_p / (slatop(ft) * leaf_c )
+                                 leaf_c  = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
+                                 leaf_n  = currentCohort%prt%GetState(leaf_organ, nitrogen_element)
+                                 lnc_top = leaf_n / (slatop(ft) * leaf_c )
+
+                                 ! If one wants to break coupling with dynamic N conentrations,
+                                 ! use the stoichiometry parameter
+                                 ! lnc_top  = prt_params%nitr_stoich_p1(ft,leaf_organ)/slatop(ft)
                                  
                                  lnc_top = prt_params%nitr_stoich_p1(ft,leaf_organ)/slatop(ft)
                                  lpc_top = prt_params%phos_stoich_p1(ft,leaf_organ)/slatop(ft)
@@ -647,6 +654,16 @@ contains
 
                         fnrt_n = currentCohort%prt%GetState(fnrt_organ, nitrogen_element)
 
+                        ! If one wants to break coupling with dynamic N conentrations,
+                        ! use the stoichiometry parameter
+                        !
+                        ! live_stem_n = prt_params%allom_agb_frac(currentCohort%pft) * &
+                        !               sapw_c * prt_params%nitr_stoich_p1(ft,sapw_organ)
+                        ! live_croot_n = (1.0_r8-prt_params%allom_agb_frac(currentCohort%pft)) * &
+                        !               sapw_c * prt_params%nitr_stoich_p1(ft,sapw_organ)
+                        ! fnrt_n = fnrt_c * prt_params%nitr_stoich_p1(ft,fnrt_organ)
+
+                        
                      case default
                         
 
