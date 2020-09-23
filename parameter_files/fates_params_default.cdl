@@ -251,6 +251,9 @@ variables:
 	double fates_leaf_diameter(fates_pft) ;
 		fates_leaf_diameter:units = "m" ;
 		fates_leaf_diameter:long_name = "Characteristic leaf dimension" ;
+	double fates_leaf_flnr(fates_pft) ;
+		fates_leaf_flnr:units = "gN Rubisco / gN leaf" ;
+		fates_leaf_flnr:long_name = "fraction of leaf N in the Rubisco enzyme" ;
 	double fates_leaf_jmaxha(fates_pft) ;
 		fates_leaf_jmaxha:units = "J/mol" ;
 		fates_leaf_jmaxha:long_name = "activation energy for jmax" ;
@@ -1004,6 +1007,9 @@ data:
 
  fates_leaf_diameter = 0.04, 0.04, 0.04, 0.04, 0.04, 0.04, 0.04, 0.04, 0.04, 
     0.04, 0.04, 0.04 ;
+
+ fates_leaf_flnr = 0.0461, 0.04875, 0.0546, 0.0515, 0.0716, 0.1007, 0.0517, 
+    0.0943, 0.0943, 0.1365, 0.1365, 0.09 ;
 
  fates_leaf_jmaxha = 43540, 43540, 43540, 43540, 43540, 43540, 43540, 43540, 
     43540, 43540, 43540, 43540 ;
