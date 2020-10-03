@@ -190,6 +190,7 @@ contains
     real(r8) :: fnrt_n             ! Fine root nitrogen content (kgN/plant)
     real(r8) :: leaf_c             ! Leaf carbon (kgC/plant)
     real(r8) :: leaf_n             ! leaf nitrogen content (kgN/plant)
+    real(r8) :: leaf_p             ! leaf phosphorus [kgP]
     real(r8) :: g_sb_leaves        ! Mean combined (stomata+boundary layer) leaf conductance [m/s]
                                    ! over all of the patch's leaves.  The "sb" refers to the combined
                                    ! "s"tomatal and "b"oundary layer.
@@ -471,20 +472,21 @@ contains
                                  
                               case (prt_cnp_flex_allom_hyp)
 
-                                ! leaf_c  = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
-                                ! leaf_n  = currentCohort%prt%GetState(leaf_organ, nitrogen_element)
-                                ! lnc_top = leaf_n / (slatop(ft) * leaf_c )
-                                ! lpc_top = leaf_p / (slatop(ft) * leaf_c )
                                  leaf_c  = currentCohort%prt%GetState(leaf_organ, all_carbon_elements)
-                                 leaf_n  = currentCohort%prt%GetState(leaf_organ, nitrogen_element)
-                                 lnc_top = leaf_n / (slatop(ft) * leaf_c )
+                                 if( (leaf_c*slatop(ft)) > nearzero) then
+                                   leaf_n  = currentCohort%prt%GetState(leaf_organ, nitrogen_element)
+                                   leaf_p  = currentCohort%prt%GetState(leaf_organ, phosphorus_element)
+                                   lnc_top = leaf_n / (slatop(ft) * leaf_c )
+                                   lpc_top = leaf_p / (slatop(ft) * leaf_c )
+                                 else
+                                   lnc_top = prt_params%nitr_stoich_p1(ft,leaf_organ)/slatop(ft)
+                                   lpc_top = prt_params%phos_stoich_p1(ft,leaf_organ)/slatop(ft)
+                                 end if
 
                                  ! If one wants to break coupling with dynamic N conentrations,
                                  ! use the stoichiometry parameter
                                  ! lnc_top  = prt_params%nitr_stoich_p1(ft,leaf_organ)/slatop(ft)
                                  
-                                 lnc_top = prt_params%nitr_stoich_p1(ft,leaf_organ)/slatop(ft)
-                                 lpc_top = prt_params%phos_stoich_p1(ft,leaf_organ)/slatop(ft)
                                  lnc_top = min(max(lnc_top,0.25_r8),3.0_r8) !based on doi: 10.1002/ece3.1173
                                  lpc_top = min(max(lpc_top,0.014_r8),0.85_r8) !based on doi: 10.1002/ece3.1173
 
@@ -1903,7 +1905,6 @@ contains
                                       ! (umol CO2/m**2/s)
       real(r8) :: co2_rcurve_islope25 ! leaf layer: Initial slope of CO2 response curve 
                                       ! (C4 plants) at 25C
-      !real(r8) :: !placeholder for defining log 
       
       
       ! Parameters
@@ -1959,8 +1960,8 @@ contains
                           vcmax_np3(ft)*log(lpc) + vcmax_np4(ft)*log(lnc)*log(lpc))&
                           * dayl_factor
                  jmax25top_eca_ft = exp(jmax_np1 + jmax_np2*log(vcmax25top_ft) + jmax_np3*log(lpc)) * dayl_factor
-                 vcmax25 = (min(max(vcmax25top_eca_ft, 10.0_r8), 150.0_r8)) * nscaler
-                 jmax25 = (min(max(jmax25top_eca_ft, 10.0_r8), 250.0_r8)) * nscaler
+                 vcmax25top_ft = (min(max(vcmax25top_eca_ft, 10.0_r8), 150.0_r8))
+                 jmax25top_ft = (min(max(jmax25top_eca_ft, 10.0_r8), 250.0_r8))
             end if
          end select
 
