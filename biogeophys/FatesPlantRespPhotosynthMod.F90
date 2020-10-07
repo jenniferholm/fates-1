@@ -40,6 +40,7 @@ module FATESPlantRespPhotosynthMod
    use PRTGenericMod,     only : prt_cnp_flex_allom_hyp 
    use PRTGenericMod,     only : all_carbon_elements
    use PRTGenericMod,     only : nitrogen_element
+   use PRTGenericMod,     only : phosphorus_element
    use PRTGenericMod,     only : leaf_organ
    use PRTGenericMod,     only : fnrt_organ
    use PRTGenericMod,     only : sapw_organ
@@ -1959,15 +1960,18 @@ contains
                  vcmax25top_eca_ft = exp(vcmax_np1(ft) + vcmax_np2(ft)*log(lnc) + &
                           vcmax_np3(ft)*log(lpc) + vcmax_np4(ft)*log(lnc)*log(lpc))&
                           * dayl_factor
-                 jmax25top_eca_ft = exp(jmax_np1 + jmax_np2*log(vcmax25top_ft) + jmax_np3*log(lpc)) * dayl_factor
-                 vcmax25top_ft = (min(max(vcmax25top_eca_ft, 10.0_r8), 150.0_r8))
-                 jmax25top_ft = (min(max(jmax25top_eca_ft, 10.0_r8), 250.0_r8))
+                 jmax25top_eca_ft = exp(jmax_np1 + jmax_np2*log(vcmax25top_eca_ft) + jmax_np3*log(lpc)) * dayl_factor
+                 vcmax25 = (min(max(vcmax25top_eca_ft, 10.0_r8), 150.0_r8)) * nscaler
+                 jmax25  = (min(max(jmax25top_eca_ft, 10.0_r8), 250.0_r8)) * nscaler
+            else
+                 vcmax25 = vcmax25top_ft * nscaler
+                 jmax25  = jmax25top_ft * nscaler
             end if
          end select
 
          ! Vcmax25top was already calculated to derive the nscaler function
-         vcmax25 = vcmax25top_ft * nscaler
-         jmax25  = jmax25top_ft * nscaler
+         !vcmax25 = vcmax25top_ft * nscaler
+         !jmax25  = jmax25top_ft * nscaler
          tpu25   = tpu25top_ft * nscaler
          co2_rcurve_islope25 = co2_rcurve_islope25top_ft * nscaler
          
