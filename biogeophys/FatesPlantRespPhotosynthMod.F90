@@ -1247,7 +1247,7 @@ contains
 
            ! This is the stomatal resistance of the leaf layer
            rstoma_out = 1._r8/gstoma
-	   
+   
         else
 
            ! No leaf area. This layer is present only because of stems. 

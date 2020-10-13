@@ -11,7 +11,6 @@ dimensions:
 	fates_pft = 12 ;
 	fates_prt_organs = 6 ;
 	fates_string_length = 60 ;
-	fates_variants = 2 ;
 variables:
 	double fates_history_ageclass_bin_edges(fates_history_age_bins) ;
 		fates_history_ageclass_bin_edges:units = "yr" ;
@@ -297,8 +296,8 @@ variables:
 		fates_mort_bmort:units = "1/yr" ;
 		fates_mort_bmort:long_name = "background mortality rate" ;
 	double fates_mort_freezetol(fates_pft) ;
-		fates_mort_freezetol:units = "NA" ;
-		fates_mort_freezetol:long_name = "minimum temperature tolerance (NOT USED)" ;
+		fates_mort_freezetol:units = "degrees C" ;
+		fates_mort_freezetol:long_name = "minimum temperature tolerance" ;
 	double fates_mort_hf_flc_threshold(fates_pft) ;
 		fates_mort_hf_flc_threshold:units = "fraction" ;
 		fates_mort_hf_flc_threshold:long_name = "plant fractional loss of conductivity at which drought mortality begins for hydraulic model" ;
@@ -1060,9 +1059,9 @@ data:
  fates_prescribed_npp_understory = 0.03125, 0.03125, 0.03125, 0.03125, 
     0.03125, 0.03125, 0.03125, 0.03125, 0.03125, 0.03125, 0.03125, 0.03125 ;
 
- fates_prescribed_nuptake = 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ;
+ fates_prescribed_nuptake = 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 ;
 
- fates_prescribed_puptake = 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ;
+ fates_prescribed_puptake = 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 ;
 
  fates_prescribed_recruitment = 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 
     0.02, 0.02, 0.02, 0.02, 0.02 ;
@@ -1225,8 +1224,7 @@ data:
  fates_trim_limit = 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3 ;
 
  fates_turnover_carb_retrans =
-  0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025, 
-    0.025, 0.025,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

@@ -343,6 +343,8 @@ module FatesHistoryInterfaceMod
   integer :: ih_meanliqvol_si
 
   integer :: ih_nesterov_fire_danger_si
+  integer :: ih_fire_nignitions_si
+  integer :: ih_fire_fdi_si
   integer :: ih_fire_intensity_area_product_si
   integer :: ih_spitfire_ros_si
   integer :: ih_fire_ros_area_product_si
@@ -356,6 +358,7 @@ module FatesHistoryInterfaceMod
   integer :: ih_fire_fuel_sav_si
   integer :: ih_fire_fuel_mef_si
   integer :: ih_sum_fuel_si
+  integer :: ih_fragmentation_scaler_si
 
   integer :: ih_nplant_si_scpf
   integer :: ih_gpp_si_scpf
@@ -573,6 +576,7 @@ module FatesHistoryInterfaceMod
   ! indices to (site x fuel class) variables
   integer :: ih_litter_moisture_si_fuel
   integer :: ih_burnt_frac_litter_si_fuel
+  integer :: ih_fuel_amount_si_fuel
 
   ! indices to (site x cwd size class) variables
   integer :: ih_cwd_ag_si_cwdsc
@@ -1767,6 +1771,8 @@ end subroutine flush_hvars
                hio_crownarea_si_pft    => this%hvars(ih_crownarea_si_pft)%r82d, &
                hio_canopycrownarea_si_pft  => this%hvars(ih_canopycrownarea_si_pft)%r82d, &
                hio_nesterov_fire_danger_si => this%hvars(ih_nesterov_fire_danger_si)%r81d, &
+               hio_fire_nignitions_si => this%hvars(ih_fire_nignitions_si)%r81d, &
+               hio_fire_fdi_si => this%hvars(ih_fire_fdi_si)%r81d, &
                hio_spitfire_ros_si     => this%hvars(ih_spitfire_ros_si)%r81d, &
                hio_fire_ros_area_product_si=> this%hvars(ih_fire_ros_area_product_si)%r81d, &
                hio_tfc_ros_si          => this%hvars(ih_tfc_ros_si)%r81d, &
@@ -1780,6 +1786,7 @@ end subroutine flush_hvars
                hio_fire_fuel_sav_si    => this%hvars(ih_fire_fuel_sav_si)%r81d, &
                hio_fire_fuel_mef_si    => this%hvars(ih_fire_fuel_mef_si)%r81d, &
                hio_sum_fuel_si         => this%hvars(ih_sum_fuel_si)%r81d,  &
+               hio_fragmentation_scaler_si  => this%hvars(ih_fragmentation_scaler_si)%r81d,  &
                hio_litter_in_si        => this%hvars(ih_litter_in_si)%r81d, &
                hio_litter_out_si       => this%hvars(ih_litter_out_si)%r81d, &
                hio_seed_bank_si        => this%hvars(ih_seed_bank_si)%r81d, &
@@ -1959,6 +1966,7 @@ end subroutine flush_hvars
                hio_fire_intensity_si_age          => this%hvars(ih_fire_intensity_si_age)%r82d, &
                hio_fire_sum_fuel_si_age           => this%hvars(ih_fire_sum_fuel_si_age)%r82d, &
                hio_burnt_frac_litter_si_fuel      => this%hvars(ih_burnt_frac_litter_si_fuel)%r82d, &
+               hio_fuel_amount_si_fuel            => this%hvars(ih_fuel_amount_si_fuel)%r82d, &
                hio_canopy_height_dist_si_height   => this%hvars(ih_canopy_height_dist_si_height)%r82d, &
                hio_leaf_height_dist_si_height     => this%hvars(ih_leaf_height_dist_si_height)%r82d, &
                hio_litter_moisture_si_fuel        => this%hvars(ih_litter_moisture_si_fuel)%r82d, &
@@ -2024,8 +2032,8 @@ end subroutine flush_hvars
 
          ! Total model error [kg/day -> mg/day]  (all elements)
          do el = 1, num_elements
-             site_mass => sites(s)%mass_balance(el)
-             hio_err_fates_si(io_si,el) = site_mass%err_fates * mg_per_kg
+
+             hio_err_fates_si(io_si,el) = sites(s)%mass_balance(el)%err_fates * mg_per_kg
 
              ! Total element lost to atmosphere from burning (kg/site/day -> g/m2/s)
              hio_burn_flux_elem(io_si,el) = &
@@ -2062,6 +2070,8 @@ end subroutine flush_hvars
          
          ! site-level fire variables
          hio_nesterov_fire_danger_si(io_si) = sites(s)%acc_NI
+         hio_fire_nignitions_si(io_si) = sites(s)%NF
+         hio_fire_fdi_si(io_si) = sites(s)%FDI
 
          ! If hydraulics are turned on, track the error terms
          ! associated with dynamics
@@ -2159,7 +2169,7 @@ end subroutine flush_hvars
                  cpatch%FI * cpatch%frac_burnt * cpatch%area * AREA_INV
 
             hio_fire_sum_fuel_si_age(io_si, cpatch%age_class) = hio_fire_sum_fuel_si_age(io_si, cpatch%age_class) + &
-                 cpatch%sum_fuel * cpatch%area * AREA_INV
+                 cpatch%sum_fuel * g_per_kg * cpatch%area * AREA_INV
              
             if(associated(cpatch%tallest))then
                hio_trimming_si(io_si) = hio_trimming_si(io_si) + cpatch%tallest%canopy_trim * cpatch%area * AREA_INV
@@ -2760,10 +2770,14 @@ end subroutine flush_hvars
             hio_fire_fuel_sav_si(io_si)        = hio_fire_fuel_sav_si(io_si) + cpatch%fuel_sav * cpatch%area * AREA_INV
             hio_fire_fuel_mef_si(io_si)        = hio_fire_fuel_mef_si(io_si) + cpatch%fuel_mef * cpatch%area * AREA_INV
             hio_sum_fuel_si(io_si)             = hio_sum_fuel_si(io_si) + cpatch%sum_fuel * g_per_kg * cpatch%area * AREA_INV
+            hio_fragmentation_scaler_si(io_si) = hio_fragmentation_scaler_si(io_si) + cpatch%fragmentation_scaler * cpatch%area * AREA_INV
             
             do i_fuel = 1,nfsc
                hio_litter_moisture_si_fuel(io_si, i_fuel) = hio_litter_moisture_si_fuel(io_si, i_fuel) + &
                     cpatch%litter_moisture(i_fuel) * cpatch%area * AREA_INV
+
+               hio_fuel_amount_si_fuel(io_si, i_fuel) = hio_fuel_amount_si_fuel(io_si, i_fuel) + &
+                    cpatch%fuel_frac(i_fuel) * cpatch%sum_fuel * cpatch%area * AREA_INV
 
                hio_burnt_frac_litter_si_fuel(io_si, i_fuel) = hio_burnt_frac_litter_si_fuel(io_si, i_fuel) + &
                     cpatch%burnt_frac_litter(i_fuel) * cpatch%frac_burnt * cpatch%area * AREA_INV
@@ -3724,15 +3738,17 @@ end subroutine update_history_hifrq
     integer  :: io_si     ! The site index of the IO array
     integer  :: ipa      ! The local "I"ndex of "PA"tches 
     integer  :: ft               ! functional type index
-    integer  :: scpf
 !    integer  :: io_shsl  ! The combined "SH"ell "S"oil "L"ayer index in the IO array
     real(r8), parameter :: tiny = 1.e-5_r8      ! some small number
     real(r8) :: ncohort_scpf(nlevsclass*maxpft)  ! Bins to count up cohorts counts used in weighting
+    ! should be "hio_nplant_si_scpf"
+    real(r8) :: nplant_scpf(nlevsclass*maxpft)  ! Bins to count up cohorts counts used in weighting
                                                    ! should be "hio_nplant_si_scpf"
     real(r8) :: number_fraction
     real(r8) :: number_fraction_rate
     real(r8) :: mean_aroot
     integer  :: ipa2     ! patch incrementer
+    integer  :: ix       ! histogram x (count) bin index
     integer  :: iscpf    ! index of the scpf group
     integer  :: ipft     ! index of the pft loop
     integer  :: iscls    ! index of the size-class loop
@@ -3749,6 +3765,7 @@ end subroutine update_history_hifrq
     real(r8) :: vwc              ! volumetric water content of layer [m3/m3] = theta
     real(r8) :: vwc_sat          ! saturated water content of layer [m3/m3]
     real(r8) :: psi              ! matric potential of soil layer
+    character(2) :: fmt_char
     type(ed_patch_type),pointer  :: cpatch
     type(ed_cohort_type),pointer :: ccohort
     type(ed_cohort_hydr_type), pointer :: ccohort_hydr
@@ -3757,9 +3774,16 @@ end subroutine update_history_hifrq
     real(r8), parameter :: daysecs = 86400.0_r8 ! What modeler doesn't recognize 86400?
     real(r8), parameter :: yeardays = 365.0_r8  ! Should this be 365.25?
 
+    integer,  parameter :: iterh2_nhist = 50
+    real(r8), parameter :: iterh2_dx    = 1._r8
+    real(r8)            ::  iterh2_histx(iterh2_nhist)
+    real(r8)            ::  iterh2_histy(iterh2_nhist)
+    
+    logical, parameter :: print_iterations = .false.
     
     if(hlm_use_planthydro.eq.ifalse) return
 
+    
     associate( hio_errh2o_scpf  => this%hvars(ih_errh2o_scpf)%r82d, &
           hio_tran_scpf         => this%hvars(ih_tran_scpf)%r82d, &
           hio_sapflow_scpf      => this%hvars(ih_sapflow_scpf)%r82d, &
@@ -3798,7 +3822,12 @@ end subroutine update_history_hifrq
 
       ! Flush the relevant history variables 
       call this%flush_hvars(nc,upfreq_in=4)
-      
+
+      if(print_iterations) then
+          do iscpf = 1,iterh2_nhist
+              iterh2_histx(iscpf) = iterh2_dx*real(iscpf-1,r8)
+          end do
+      end if
       do s = 1,nsites
 
          site_hydr => sites(s)%si_hydr
@@ -3811,10 +3840,7 @@ end subroutine update_history_hifrq
          hio_h2oveg_si(io_si)              = site_hydr%h2oveg
          hio_h2oveg_hydro_err_si(io_si)    = site_hydr%h2oveg_hydro_err
 
-         ncohort_scpf(:) = 0.0_r8  ! Counter for normalizing weighting 
-                                   ! factors for cohort mean propoerties
-                                   ! This is actually used as a check
-                                   ! on hio_nplant_si_scpf
+        
          
          ! Get column means of some soil diagnostics, these are weighted
          ! by the amount of fine-root surface area in each layer
@@ -3851,7 +3877,10 @@ end subroutine update_history_hifrq
          hio_rootuptake_sl(io_si,:) = 0._r8
          hio_rootuptake_sl(io_si,jr1:jr2) = site_hydr%rootuptake_sl(1:nlevrhiz)
          hio_rootuptake_si(io_si) = sum(site_hydr%sapflow_scpf)
-         
+
+         ! Normalization counters
+         nplant_scpf(:) = 0._r8
+         ncohort_scpf(:) = 0._r8
          cpatch => sites(s)%oldest_patch
          do while(associated(cpatch))
             ccohort => cpatch%shortest
@@ -3859,13 +3888,32 @@ end subroutine update_history_hifrq
                if ( .not. ccohort%isnew ) then
                   ! Calculate index for the scpf class
                   iscpf = ccohort%size_by_pft_class
-                  ncohort_scpf(iscpf) = ncohort_scpf(iscpf) + ccohort%n
+                  nplant_scpf(iscpf) = nplant_scpf(iscpf) + ccohort%n
+                  ncohort_scpf(iscpf) = ncohort_scpf(iscpf) + 1._r8
                end if
                ccohort => ccohort%taller
             enddo ! cohort loop
             cpatch => cpatch%younger
          end do !patch loop
 
+
+         ! Generate a histogram of the the iteration counts
+         if(print_iterations) then
+             iterh2_histy(:) = 0._r8
+             cpatch => sites(s)%oldest_patch
+             do while(associated(cpatch))
+                 ccohort => cpatch%shortest
+                 do while(associated(ccohort))
+                     ccohort_hydr => ccohort%co_hydr
+                     ix = count((iterh2_histx(:)-0.00001_r8) < ccohort_hydr%iterh2 )
+                     iterh2_histy(ix) = iterh2_histy(ix) + 1
+                     ccohort => ccohort%taller
+                 enddo ! cohort loop
+                 cpatch => cpatch%younger
+             end do !patch loop                     
+         end if
+
+         
          do ipft = 1, numpft
             do iscls = 1,nlevsclass
                iscpf = (ipft-1)*nlevsclass + iscls
@@ -3874,6 +3922,8 @@ end subroutine update_history_hifrq
                hio_rootuptake10_scpf(io_si,iscpf)  = site_hydr%rootuptake10_scpf(iscls,ipft)
                hio_rootuptake50_scpf(io_si,iscpf)  = site_hydr%rootuptake50_scpf(iscls,ipft)
                hio_rootuptake100_scpf(io_si,iscpf) = site_hydr%rootuptake100_scpf(iscls,ipft)
+               hio_iterh1_scpf(io_si,iscpf) = 0._r8
+               hio_iterh2_scpf(io_si,iscpf) = 0._r8
             end do
          end do
 
@@ -3892,10 +3942,10 @@ end subroutine update_history_hifrq
                   iscpf = ccohort%size_by_pft_class
                   
                   ! scale up cohort fluxes to their sites
-                  number_fraction_rate = (ccohort%n / ncohort_scpf(iscpf))/dt_tstep
+                  number_fraction_rate = (ccohort%n / nplant_scpf(iscpf))/dt_tstep
                   
                   ! scale cohorts to mean quantity
-                  number_fraction = (ccohort%n / ncohort_scpf(iscpf))
+                  number_fraction = (ccohort%n / nplant_scpf(iscpf))
                   
                   hio_errh2o_scpf(io_si,iscpf) = hio_errh2o_scpf(io_si,iscpf) + &
                         ccohort_hydr%errh2o * number_fraction_rate ! [kg/indiv/s]
@@ -3904,11 +3954,11 @@ end subroutine update_history_hifrq
                         (ccohort_hydr%qtop) * number_fraction_rate ! [kg/indiv/s]
                   
                   hio_iterh1_scpf(io_si,iscpf)          = hio_iterh1_scpf(io_si,iscpf) + &
-                        ccohort_hydr%iterh1  * number_fraction             ! [-]
+                        ccohort_hydr%iterh1/ncohort_scpf(iscpf)
                   
                   hio_iterh2_scpf(io_si,iscpf)          = hio_iterh2_scpf(io_si,iscpf) + &
-                        ccohort_hydr%iterh2 * number_fraction             ! [-]
-
+                        ccohort_hydr%iterh2/ncohort_scpf(iscpf)
+                  
                   mean_aroot = sum(ccohort_hydr%th_aroot(:)*ccohort_hydr%v_aroot_layer(:)) / &
                        sum(ccohort_hydr%v_aroot_layer(:))
                   
@@ -3965,20 +4015,30 @@ end subroutine update_history_hifrq
          end do !patch loop
 
          if(hlm_use_ed_st3.eq.ifalse) then
-            do scpf=1,nlevsclass*numpft
-               if( abs(hio_nplant_si_scpf(io_si, scpf)-ncohort_scpf(scpf)) > 1.0E-8_r8 ) then
+            do iscpf=1,nlevsclass*numpft
+               if( abs(hio_nplant_si_scpf(io_si, iscpf)-nplant_scpf(iscpf)) > 1.0E-8_r8 ) then
                   write(fates_log(),*) 'numpft:',numpft
                   write(fates_log(),*) 'nlevsclass:',nlevsclass
-                  write(fates_log(),*) 'scpf:',scpf
+                  write(fates_log(),*) 'scpf:',iscpf
                   write(fates_log(),*) 'io_si:',io_si
-                  write(fates_log(),*) 'hio_nplant_si_scpf:',hio_nplant_si_scpf(io_si, scpf)
-                  write(fates_log(),*) 'ncohort_scpf:',ncohort_scpf(scpf)
+                  write(fates_log(),*) 'hio_nplant_si_scpf:',hio_nplant_si_scpf(io_si, iscpf)
+                  write(fates_log(),*) 'nplant_scpf:',nplant_scpf(iscpf)
                   write(fates_log(),*) 'nplant check on hio_nplant_si_scpf fails during hydraulics history updates'
                   call endrun(msg=errMsg(sourcefile, __LINE__))
                end if
             end do
          end if
 
+         if(print_iterations) then
+!             print*,' Mean solves: ',sum(hio_iterh2_scpf(io_si,:))/real(count(ncohort_scpf(:)>0._r8),r8), &
+!                   ' Mean failures: ',sum(hio_iterh1_scpf(io_si,:))/real(count(ncohort_scpf(:)>0._r8),r8)
+             write(fmt_char,'(I2)') iterh2_nhist
+             write(fates_log(),fmt='(A,'//fmt_char//'I5)') 'Solves: ',int(iterh2_histy(:))
+             !write(*,*) 'Histogram: ',int(iterh2_histy(:))
+         end if
+
+
+         
       enddo ! site loop
 
     end associate
@@ -4236,6 +4296,7 @@ end subroutine update_history_hifrq
     else
        tempstring = 'inactive'
     endif
+    
     call this%set_history_var(vname='ZSTAR_BY_AGE', units='m',                   &
          long='product of zstar and patch area by age bin (divide by PATCH_AREA_BY_AGE to get mean zstar)', &
          use_default=trim(tempstring),                     &
@@ -4295,6 +4356,16 @@ end subroutine update_history_hifrq
          long='nesterov_fire_danger index', use_default='active',               &
          avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1,   &
          ivar=ivar, initialize=initialize_variables, index = ih_nesterov_fire_danger_si)
+
+    call this%set_history_var(vname='FIRE_IGNITIONS', units='number/km2/day',       &
+         long='number of ignitions', use_default='active',               &
+         avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1,   &
+         ivar=ivar, initialize=initialize_variables, index = ih_fire_nignitions_si)
+
+    call this%set_history_var(vname='FIRE_FDI', units='none',       &
+         long='probability that an ignition will lead to a fire', use_default='active',               &
+         avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1,   &
+         ivar=ivar, initialize=initialize_variables, index = ih_fire_fdi_si)
 
     call this%set_history_var(vname='FIRE_ROS', units='m/min',                 &
          long='fire rate of spread m/min', use_default='active',                &
@@ -4363,10 +4434,21 @@ end subroutine update_history_hifrq
          avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1,   &
          ivar=ivar, initialize=initialize_variables, index = ih_sum_fuel_si )
 
+    call this%set_history_var(vname='FRAGMENTATION_SCALER', units='unitless (0-1)',                &
+         long='factor by which litter/cwd fragmentation proceeds relative to max rate',          & 
+         use_default='active',                                                  & 
+         avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1,   &
+         ivar=ivar, initialize=initialize_variables, index = ih_fragmentation_scaler_si )
+
     call this%set_history_var(vname='FUEL_MOISTURE_NFSC', units='-',                &
          long='spitfire size-resolved fuel moisture', use_default='active',       &
          avgflag='A', vtype=site_fuel_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1,   &
          ivar=ivar, initialize=initialize_variables, index = ih_litter_moisture_si_fuel )
+
+    call this%set_history_var(vname='FUEL_AMOUNT_BY_NFSC', units='kg C / m2',                &
+         long='spitfire size-resolved fuel quantity', use_default='active',       &
+         avgflag='A', vtype=site_fuel_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1,   &
+         ivar=ivar, initialize=initialize_variables, index = ih_fuel_amount_si_fuel )
 
     call this%set_history_var(vname='AREA_BURNT_BY_PATCH_AGE', units='m2/m2', &
          long='spitfire area burnt by patch age (divide by patch_area_by_age to get burnt fraction by age)', &
@@ -4488,7 +4570,7 @@ end subroutine update_history_hifrq
          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_cefflux_si )
     
 
-    if(any(element_list(:)==nitrogen_element)) then
+    nitrogen_active_if: if(any(element_list(:)==nitrogen_element)) then
        call this%set_history_var(vname='STOREN', units='kgN ha-1',                      &
             long='Total nitrogen in live plant storage', use_default='active',          &
             avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1,   &
@@ -4539,10 +4621,10 @@ end subroutine update_history_hifrq
             avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1,       &
             ivar=ivar, initialize=initialize_variables, index = ih_nneedmax_si )
        
-    end if
+    end if nitrogen_active_if
 
     
-    if(any(element_list(:)==phosphorus_element)) then
+    phosphorus_active_if: if(any(element_list(:)==phosphorus_element)) then
        call this%set_history_var(vname='STOREP', units='kgP ha-1',                      &
             long='Total phosphorus in live plant storage', use_default='active',          &
             avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=0.0_r8, upfreq=1,   &
@@ -4594,7 +4676,7 @@ end subroutine update_history_hifrq
             ivar=ivar, initialize=initialize_variables, index = ih_pneedmax_si )
        
        
-    end if
+    end if phosphorus_active_if
 
 
     ! Consider deprecating the "ED_" variables  (RGK 08-2020)
@@ -5821,7 +5903,7 @@ end subroutine update_history_hifrq
          upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_cefflux_scpf )
 
     ! NITROGEN
-    if(any(element_list(:)==nitrogen_element)) then
+    nitrogen_active_if2: if(any(element_list(:)==nitrogen_element)) then
        call this%set_history_var(vname='TOTVEGN_SCPF', units='kgN/ha', &
             long='total (live) vegetation nitrogen mass by size-class x pft', use_default='inactive', &
             avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val,    &
@@ -5873,10 +5955,10 @@ end subroutine update_history_hifrq
             upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_nneedmax_scpf )
        
        
-    end if
+    end if nitrogen_active_if2
 
     ! PHOSPHORUS
-    if(any(element_list(:)==phosphorus_element))then
+    phosphorus_active_if2: if(any(element_list(:)==phosphorus_element))then
        call this%set_history_var(vname='TOTVEGP_SCPF', units='kgP/ha', &
             long='total (live) vegetation phosphorus mass by size-class x pft', use_default='inactive', &
             avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val,    &
@@ -5927,8 +6009,7 @@ end subroutine update_history_hifrq
             avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val,    &
             upfreq=1, ivar=ivar, initialize=initialize_variables, index = ih_pneedmax_scpf )
        
-       
-    end if
+    end if phosphorus_active_if2
 
     ! organ-partitioned NPP / allocation fluxes
     call this%set_history_var(vname='NPP_LEAF', units='kgC/m2/yr',       &
@@ -5964,7 +6045,7 @@ end subroutine update_history_hifrq
 
     ! PLANT HYDRAULICS
 
-    if(hlm_use_planthydro.eq.itrue) then
+    hydro_active_if: if(hlm_use_planthydro.eq.itrue) then
        
        call this%set_history_var(vname='FATES_ERRH2O_SCPF', units='kg/indiv/s', &
              long='mean individual water balance error', use_default='inactive', &
@@ -5988,15 +6069,15 @@ end subroutine update_history_hifrq
 
        
        call this%set_history_var(vname='FATES_ITERH1_SCPF', units='count/indiv/step', &
-             long='number of outer iterations required to achieve tolerable water balance error', &
+             long='water balance error iteration diagnostic 1', &
              use_default='inactive', &
-             avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+             avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val,    &
              upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_iterh1_scpf )
        
        call this%set_history_var(vname='FATES_ITERH2_SCPF', units='count/indiv/step', &
-             long='number of inner iterations required to achieve tolerable water balance error', &
+             long='water balance error iteration diagnostic 2', &
              use_default='inactive', &
-             avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
+             avgflag='A', vtype=site_size_pft_r8, hlms='CLM:ALM', flushval=hlm_hio_ignore_val,    &
              upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_iterh2_scpf )
        
        call this%set_history_var(vname='FATES_ATH_SCPF', units='m3 m-3', &
@@ -6153,7 +6234,7 @@ end subroutine update_history_hifrq
              long='cumulative net borrowed (+) from plant_stored_h2o due to plant hydrodynamics', use_default='inactive',   &
              avgflag='A', vtype=site_r8, hlms='CLM:ALM', flushval=0.0_r8,    &
              upfreq=4, ivar=ivar, initialize=initialize_variables, index = ih_h2oveg_hydro_err_si )
-    end if
+    end if hydro_active_if 
 
     ! Must be last thing before return
     this%num_history_vars_ = ivar

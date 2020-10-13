@@ -466,6 +466,9 @@ contains
       if (hlm_use_lu_harvest .gt. 0) then
          allocate(bc_in%hlm_harvest_rates(num_lu_harvest_cats))
          allocate(bc_in%hlm_harvest_catnames(num_lu_harvest_cats))
+      else ! LoggingMortality_frac needs these passed to it regardless of harvest
+         allocate(bc_in%hlm_harvest_rates(0))
+         allocate(bc_in%hlm_harvest_catnames(0))
       end if
 
       allocate(bc_in%pft_areafrac(maxpft))
@@ -1206,9 +1209,9 @@ contains
                write(fates_log(), *) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
          end if
 
-         if ( (hlm_use_lu_harvest .lt. 0).or.(hlm_use_lu_harvest .gt. 2) ) then
+         if ( (hlm_use_lu_harvest .lt. 0).or.(hlm_use_lu_harvest .gt. 1) ) then
             if (fates_global_verbose()) then
-               write(fates_log(), *) 'The FATES lu_harvest flag must be 0 or 1 or 2, exiting'
+               write(fates_log(), *) 'The FATES lu_harvest flag must be 0 or 1,  exiting'
             end if
             call endrun(msg=errMsg(sourcefile, __LINE__))
          end if
