@@ -488,8 +488,8 @@ contains
                                  ! use the stoichiometry parameter
                                  ! lnc_top  = prt_params%nitr_stoich_p1(ft,leaf_organ)/slatop(ft)
                                  
-                                 lnc_top = min(max(lnc_top,0.25_r8),3.0_r8) !based on doi: 10.1002/ece3.1173
-                                 lpc_top = min(max(lpc_top,0.014_r8),0.85_r8) !based on doi: 10.1002/ece3.1173
+                                 ! lnc_top = min(max(lnc_top,0.25_r8),3.0_r8) !based on doi: 10.1002/ece3.1173
+                                 ! lpc_top = min(max(lpc_top,0.014_r8),0.85_r8) !based on doi: 10.1002/ece3.1173
 
                               end select
 
@@ -1925,8 +1925,8 @@ contains
       real(r8) :: jmax_np1 = 1.246_r8       ! jmax~np relationship coefficient
       real(r8) :: jmax_np2 = 0.886_r8       ! jmax~np relationship coefficient
       real(r8) :: jmax_np3 = 0.089_r8       ! jmax~np relationship coefficient
-      real(r8) :: vcmax25top_eca_ft         ! canopy top maximum rate of carboxylation at 25C, but eca placeholder
-      real(r8) :: jmax25top_eca_ft          ! canopy top maximum electron transport rate at 25C, but eca placeholder
+      real(r8) :: vcmax25top_comp_ft         ! canopy top maximum rate of carboxylation at 25C, but nutrient competition placeholder
+      real(r8) :: jmax25top_comp_ft          ! canopy top maximum electron transport rate at 25C, but nutrient competition placeholder
 
       vcmaxha = EDPftvarcon_inst%vcmaxha(FT)
       jmaxha  = EDPftvarcon_inst%jmaxha(FT)
@@ -1944,8 +1944,8 @@ contains
       jmaxc  = fth25_f(jmaxhd, jmaxse)
       tpuc   = fth25_f(tpuhd, tpuse)
 
-      vcmax25top_eca_ft = vcmax25top_ft
-      jmax25top_eca_ft = jmax25top_ft
+      vcmax25top_comp_ft = vcmax25top_ft
+      jmax25top_comp_ft = jmax25top_ft
 
       if ( parsun_lsl <= 0._r8) then           ! night time
          vcmax             = 0._r8
@@ -1955,18 +1955,30 @@ contains
       else                                     ! day time
 
          select case(hlm_parteh_mode)
+
+         case (prt_carbon_allom_hyp)
+                 ! vcmax25 at canopy top, as in CNP but using lnc at top of the canopy
+                 !vcmax25top = lnc_top * flnr * fnr * act25 * dayl_factor
+                 
+                 !! Parameters derived from vcmax25top. Bonan et al (2011) JGR, 116, doi:10.1029/2010JG001593
+                 ! used jmax25 = 1.97 vcmax25, from Wullschleger (1993) Journal of Experimental Botany 44:907-920.
+                 ! jmax25top = (2.59_r8 - 0.035_r8*min(max((temp_a10-tfrz),11._r8),35._r8)) * vcmax25top
+
+                 !vcmax25 = vcmax25top_ft * nscaler
+                 !jmax25  = jmax25top_ft * nscaler
+
          case (prt_cnp_flex_allom_hyp)
-            if (hlm_parteh_mode .eq. prt_cnp_flex_allom_hyp) then
-                 vcmax25top_eca_ft = exp(vcmax_np1(ft) + vcmax_np2(ft)*log(lnc) + &
+                 
+                 lnc_top = min(max(lnc_top,0.25_r8),3.0_r8) !based on doi: 10.1002/ece3.1173
+                 lpc_top = min(max(lpc_top,0.014_r8),0.85_r8) !based on doi: 10.1002/ece3.1173
+         
+                 vcmax25top_comp_ft = exp(vcmax_np1(ft) + vcmax_np2(ft)*log(lnc) + &
                           vcmax_np3(ft)*log(lpc) + vcmax_np4(ft)*log(lnc)*log(lpc))&
                           * dayl_factor
-                 jmax25top_eca_ft = exp(jmax_np1 + jmax_np2*log(vcmax25top_eca_ft) + jmax_np3*log(lpc)) * dayl_factor
-                 vcmax25 = (min(max(vcmax25top_eca_ft, 10.0_r8), 150.0_r8)) * nscaler
-                 jmax25  = (min(max(jmax25top_eca_ft, 10.0_r8), 250.0_r8)) * nscaler
-            else
-                 vcmax25 = vcmax25top_ft * nscaler
-                 jmax25  = jmax25top_ft * nscaler
-            end if
+                 jmax25top_comp_ft = exp(jmax_np1 + jmax_np2*log(vcmax25top_comp_ft) + jmax_np3*log(lpc)) * dayl_factor
+                 vcmax25 = (min(max(vcmax25top_comp_ft, 10.0_r8), 150.0_r8)) * nscaler
+                 jmax25  = (min(max(jmax25top_comp_ft, 10.0_r8), 250.0_r8)) * nscaler
+           
          end select
 
          ! Vcmax25top was already calculated to derive the nscaler function
