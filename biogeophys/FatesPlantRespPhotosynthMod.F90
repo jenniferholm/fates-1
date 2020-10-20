@@ -479,6 +479,8 @@ contains
                                    leaf_p  = currentCohort%prt%GetState(leaf_organ, phosphorus_element)
                                    lnc_top = leaf_n / (slatop(ft) * leaf_c )
                                    lpc_top = leaf_p / (slatop(ft) * leaf_c )
+                                   lnc_top = min(max(lnc_top,0.25_r8),3.0_r8) !based on doi: 10.1002/ece3.1173
+                                   lpc_top = min(max(lpc_top,0.014_r8),0.85_r8) !based on doi: 10.1002/ece3.1173
                                  else
                                    lnc_top = prt_params%nitr_stoich_p1(ft,leaf_organ)/slatop(ft)
                                    lpc_top = prt_params%phos_stoich_p1(ft,leaf_organ)/slatop(ft)
@@ -1969,8 +1971,8 @@ contains
 
          case (prt_cnp_flex_allom_hyp)
                  
-                 lnc_top = min(max(lnc_top,0.25_r8),3.0_r8) !based on doi: 10.1002/ece3.1173
-                 lpc_top = min(max(lpc_top,0.014_r8),0.85_r8) !based on doi: 10.1002/ece3.1173
+                 !lnc_top = min(max(lnc_top,0.25_r8),3.0_r8) !based on doi: 10.1002/ece3.1173
+                 !lpc_top = min(max(lpc_top,0.014_r8),0.85_r8) !based on doi: 10.1002/ece3.1173
          
                  vcmax25top_comp_ft = exp(vcmax_np1(ft) + vcmax_np2(ft)*log(lnc) + &
                           vcmax_np3(ft)*log(lpc) + vcmax_np4(ft)*log(lnc)*log(lpc))&
