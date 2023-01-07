@@ -13,7 +13,6 @@ dimensions:
 	fates_pft = 12 ;
 	fates_plant_organs = 4 ;
 	fates_string_length = 60 ;
-	fates_hlm_pftno = 14 ;
 variables:
 	double fates_history_ageclass_bin_edges(fates_history_age_bins) ;
 		fates_history_ageclass_bin_edges:units = "yr" ;
@@ -85,7 +84,7 @@ variables:
 		fates_allom_crown_depth_frac:units = "fraction" ;
 		fates_allom_crown_depth_frac:long_name = "the depth of a cohort crown as a fraction of its height" ;
 	double fates_allom_d2bl1(fates_pft) ;
-		fates_allom_d2bl1:units = "variable" ;:
+		fates_allom_d2bl1:units = "variable" ;
 		fates_allom_d2bl1:long_name = "Parameter 1 for d2bl allometry" ;
 	double fates_allom_d2bl2(fates_pft) ;
 		fates_allom_d2bl2:units = "variable" ;
@@ -562,6 +561,8 @@ variables:
 	double fates_woody(fates_pft) ;
 		fates_woody:units = "logical flag" ;
 		fates_woody:long_name = "Binary woody lifeform flag" ;
+	double fates_hlm_pft_map(fates_hlm_pftno, fates_pft) ;
+		fates_hlm_pft_map:units = "area fraction" ;
 		fates_hlm_pft_map:long_name = "In fixed biogeog mode, fraction of HLM area associated with each FATES PFT" ;
 	double fates_fire_FBD(fates_litterclass) ;
 		fates_fire_FBD:units = "kg Biomass/m3" ;
@@ -1275,9 +1276,6 @@ data:
 
  fates_nonhydro_smpso = -66000, -66000, -66000, -66000, -66000, -66000, 
     -66000, -66000, -66000, -66000, -66000, -66000 ;
-
- fates_nitr_store_ratio = 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 
-    1.5, 1.5 ;
 
  fates_phen_cold_size_threshold = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ;
 
