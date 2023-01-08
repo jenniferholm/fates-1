@@ -894,9 +894,9 @@ contains
                currentPatch%c_lblayer = cf / bc_in(s)%rb_pa(ifp)
                
             end if
-            
-            currentPatch => currentPatch%younger
-            
+           
+           end if ! not bare ground patch 
+           currentPatch => currentPatch%younger 
         end do  !patch loop
         
         deallocate(rootfr_ft)
@@ -2047,6 +2047,7 @@ subroutine LeafLayerBiophysicalRates( parsun_lsl, &
    real(r8), intent(in) :: parsun_lsl      ! PAR absorbed in sunlit leaves for this layer
    integer,  intent(in) :: ft              ! (plant) Functional Type Index
    real(r8), intent(in) :: nscaler         ! Scale for leaf nitrogen profile
+   real(r8), intent(in) :: nscaler_prt     ! Scale for leaf nitrogen profile based on variable vcmax25top_prt
    real(r8), intent(in) :: vcmax25top_ft   ! canopy top maximum rate of carboxylation at 25C
                                              ! for this pft (umol CO2/m**2/s)
    real(r8), intent(in) :: jmax25top_ft    ! canopy top maximum electron transport rate at 25C

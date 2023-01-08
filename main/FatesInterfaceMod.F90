@@ -262,7 +262,6 @@ contains
     fates%bc_in(s)%precip24_pa(:)      = 0.0_r8
     fates%bc_in(s)%relhumid24_pa(:)    = 0.0_r8
     fates%bc_in(s)%wind24_pa(:)        = 0.0_r8
-    fates%bc_in(s)%t_veg24_pa(:)       = 0.0_r8
      
     fates%bc_in(s)%solad_parb(:,:)     = 0.0_r8
     fates%bc_in(s)%solai_parb(:,:)     = 0.0_r8

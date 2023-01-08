@@ -748,7 +748,7 @@ contains
          data=this%clumping_index)
 
     name = 'fates_leaf_flnr'
-    call fates_params%RetreiveParameterAllocate(name=name, &
+    call fates_params%RetrieveParameterAllocate(name=name, &
          data=this%flnr)
 
     name = 'fates_leaf_c3psn'
@@ -902,19 +902,19 @@ contains
          data=this%jmaxse)
 
     name = 'fates_eca_vcmax_np1'
-    call fates_params%RetreiveParameterAllocate(name=name, &
+    call fates_params%RetrieveParameterAllocate(name=name, &
          data=this%vcmax_np1)
 
     name = 'fates_eca_vcmax_np2'
-    call fates_params%RetreiveParameterAllocate(name=name, &
+    call fates_params%RetrieveParameterAllocate(name=name, &
          data=this%vcmax_np2)
 
     name = 'fates_eca_vcmax_np3'
-    call fates_params%RetreiveParameterAllocate(name=name, &
+    call fates_params%RetrieveParameterAllocate(name=name, &
          data=this%vcmax_np3)
 
     name = 'fates_eca_vcmax_np4'
-    call fates_params%RetreiveParameterAllocate(name=name, &
+    call fates_params%RetrieveParameterAllocate(name=name, &
          data=this%vcmax_np4)
 
     name = 'fates_recruit_seed_germination_rate'
